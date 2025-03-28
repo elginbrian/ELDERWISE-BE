@@ -18,6 +18,8 @@ WORKDIR /app
 
 COPY --from=builder /app/elderwise .
 
+RUN chmod +x elderwise && ls -la /app
+
 EXPOSE 3000
 
-CMD ["./elderwise"]
+CMD ["/app/elderwise"]
