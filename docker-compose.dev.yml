@@ -29,8 +29,6 @@ services:
       - "4000:3000"
     depends_on:
       - postgres
-    volumes:
-      - .:/app
 
 volumes:
   postgres_data_dev:
