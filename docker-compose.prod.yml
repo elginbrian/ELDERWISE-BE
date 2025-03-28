@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: elderwise_postgres_prod
+    environment:
+      - POSTGRES_USER=produser
+      - POSTGRES_PASSWORD=prodpassword
+      - POSTGRES_DB=elderwise_prod
+      - POSTGRES_TIMEZONE=Asia/Jakarta
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    restart: always
+
+  app:
+    image: elginbrian/elderwise:latest
+    container_name: elderwise_backend_prod
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=produser
+      - POSTGRES_PASSWORD=prodpassword
+      - POSTGRES_DB=elderwise_prod
+      - POSTGRES_TIMEZONE=Asia/Jakarta
+      - ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    restart: always
+
+volumes:
+  postgres_data_prod:
