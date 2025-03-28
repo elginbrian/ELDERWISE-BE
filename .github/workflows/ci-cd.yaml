@@ -57,6 +57,8 @@ jobs:
   deploy:
     needs: docker
     runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: ${{ github.ref }}
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
