@@ -28,11 +28,9 @@ jobs:
           go test ./...
 
   docker:
-    if: ${{ github.event_name == 'push' }}
     needs: build-and-test
     runs-on: ubuntu-latest
-    env:
-      BRANCH: ${{ github.ref_name }}
+    if: ${{ github.event_name == 'push' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -43,6 +41,9 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Set branch name
+        run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         run: |
           echo "Building image for branch: $BRANCH"
@@ -50,18 +51,23 @@ jobs:
             echo "Building production image..."
             docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:latest .
             docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:latest
-          else
+          elif [ "$BRANCH" = "dev" ]; then
             echo "Building development image..."
             docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:dev .
             docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:dev
+          else
+            echo "Branch not recognized, skipping Docker build."
+            exit 1
+          fi
 
   deploy:
-    if: ${{ github.event_name == 'push' }}
     needs: docker
     runs-on: ubuntu-latest
-    env:
-      BRANCH: ${{ github.ref_name }}
+    if: ${{ github.event_name == 'push' }}
     steps:
+      - name: Set branch name
+        run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -81,7 +87,7 @@ jobs:
             echo "Deploying branch: $BRANCH"
 
             if [ "$BRANCH" = "main" ]; then
-              cd github/elderwise-be-prod || { echo "Directory github/elderwise-be-prod not found."; exit 1; }
+              cd github/elderwise-be-prod || { echo "Directory not found."; exit 1; }
               git fetch origin
               git checkout "$BRANCH" || git checkout -b "$BRANCH" origin/"$BRANCH"
               git reset --hard origin/"$BRANCH"
@@ -89,14 +95,15 @@ jobs:
               docker image prune -f
               echo "Deploying production environment..."
               if [ ! -f docker-compose.prod.yml ]; then
-                echo "docker-compose.prod.yml not found in $(pwd). Exiting."
+                echo "docker-compose.prod.yml not found. Exiting."
                 exit 1
               fi
               docker-compose -f docker-compose.prod.yml down -v
               docker-compose -f docker-compose.prod.yml pull
               docker-compose -f docker-compose.prod.yml up --build -d
-            else
-              cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
+
+            elif [ "$BRANCH" = "dev" ]; then
+              cd github/elderwise-be-dev || { echo "Directory not found."; exit 1; }
               git fetch origin
               git checkout "$BRANCH" || git checkout -b "$BRANCH" origin/"$BRANCH"
               git reset --hard origin/"$BRANCH"
@@ -104,12 +111,15 @@ jobs:
               docker image prune -f
               echo "Deploying development environment..."
               if [ ! -f docker-compose.dev.yml ]; then
-                echo "docker-compose.dev.yml not found in $(pwd). Exiting."
+                echo "docker-compose.dev.yml not found. Exiting."
                 exit 1
               fi
               docker-compose -f docker-compose.dev.yml down -v
               docker-compose -f docker-compose.dev.yml pull
               docker-compose -f docker-compose.dev.yml up --build -d
+            else
+              echo "Branch not recognized. Exiting."
+              exit 1
             fi
 
             echo "Deployment completed successfully."
