@@ -63,7 +63,7 @@ jobs:
   deploy:
     needs: docker
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' }}
     steps:
       - name: Set branch name
         run: echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
