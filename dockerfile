@@ -7,6 +7,7 @@ RUN go mod download
 
 COPY . .
 
+ENV CGO_ENABLED=0
 RUN go build -o elderwise cmd/main.go
 
 FROM alpine:latest
