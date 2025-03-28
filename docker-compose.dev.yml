@@ -31,7 +31,6 @@ services:
       - postgres
     volumes:
       - .:/app
-    command: go run cmd/main.go
 
 volumes:
   postgres_data_dev:
