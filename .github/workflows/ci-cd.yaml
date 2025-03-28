@@ -101,7 +101,7 @@ jobs:
                 exit 1
               fi
               docker-compose -f docker-compose.prod.yml down -v
-              docker-compose -f docker-compose.prod.yml pull
+              docker-compose -f docker-compose.prod.yml build
               docker-compose -f docker-compose.prod.yml up -d
             else
               cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
@@ -115,7 +115,7 @@ jobs:
                 exit 1
               fi
               docker-compose -f docker-compose.dev.yml down -v
-              docker-compose -f docker-compose.dev.yml pull
+              docker-compose -f docker-compose.dev.yml build
               docker-compose -f docker-compose.dev.yml up -d
             fi
 
