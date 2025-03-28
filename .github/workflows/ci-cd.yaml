@@ -49,12 +49,12 @@ jobs:
           case "$BRANCH" in
             "main")
               echo "Building production image..."
-              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:latest .
+              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:latest -f dockerfile .
               docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:latest
               ;;
             "dev")
               echo "Building development image..."
-              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:dev .
+              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:dev -f dockerfile .
               docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:dev
               ;;
             *)

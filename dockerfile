@@ -17,6 +17,6 @@ WORKDIR /app
 
 COPY --from=builder /app/elderwise .
 
-EXPOSE 3000
+EXPOSE 3000  
 
-CMD ["./elderwise"]
+CMD ["./elderwise"]  
