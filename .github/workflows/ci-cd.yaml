@@ -31,6 +31,8 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     needs: build-and-test
     runs-on: ubuntu-latest
+    env:
+      BRANCH: ${{ github.ref_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -43,7 +45,6 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          BRANCH=$(basename "$GITHUB_REF")
           echo "Building image for branch: $BRANCH"
           if [ "$BRANCH" = "main" ]; then
             echo "Building production image..."
@@ -53,14 +54,13 @@ jobs:
             echo "Building development image..."
             docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:dev .
             docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:dev
-          fi
 
   deploy:
     if: ${{ github.event_name == 'push' }}
     needs: docker
     runs-on: ubuntu-latest
     env:
-      GITHUB_REF: ${{ github.ref }}
+      BRANCH: ${{ github.ref_name }}
     steps:
       - name: Deploy to server
         uses: appleboy/ssh-action@v0.1.6
@@ -70,11 +70,9 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            # Hentikan script jika terjadi error dan tampilkan pesan error
             set -e
             trap 'echo "An error occurred. Exiting..." && exit 1' ERR
 
-            BRANCH=$(basename "$GITHUB_REF")
             if [ -z "$BRANCH" ]; then
               echo "Branch name is empty. Exiting."
               exit 1
