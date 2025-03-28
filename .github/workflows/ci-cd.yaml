@@ -42,7 +42,8 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          BRANCH=${GITHUB_REF##*/}
+          BRANCH=$(basename "$GITHUB_REF")
+          echo "Building image for branch: $BRANCH"
           if [ "$BRANCH" = "main" ]; then
             echo "Building production image..."
             docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:latest .
@@ -65,29 +66,48 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           script: |
-            BRANCH=${GITHUB_REF##*/}
+            # Hentikan script jika terjadi error dan tampilkan pesan error
+            set -e
+            trap 'echo "An error occurred. Exiting..." && exit 1' ERR
+
+            BRANCH=$(basename "$GITHUB_REF")
+            if [ -z "$BRANCH" ]; then
+              echo "Branch name is empty. Exiting."
+              exit 1
+            fi
+
             echo "Deploying branch: $BRANCH"
 
             if [ "$BRANCH" = "main" ]; then
-              cd github/elderwise-be-prod
+              cd github/elderwise-be-prod || { echo "Directory github/elderwise-be-prod not found."; exit 1; }
               git fetch origin
-              git checkout $BRANCH || git checkout -b $BRANCH origin/$BRANCH
-              git reset --hard origin/$BRANCH
+              git checkout "$BRANCH" || git checkout -b "$BRANCH" origin/"$BRANCH"
+              git reset --hard origin/"$BRANCH"
               go mod vendor
               docker image prune -f
               echo "Deploying production environment..."
+              if [ ! -f docker-compose.prod.yml ]; then
+                echo "docker-compose.prod.yml not found in $(pwd). Exiting."
+                exit 1
+              fi
               docker-compose -f docker-compose.prod.yml down -v
               docker-compose -f docker-compose.prod.yml pull
               docker-compose -f docker-compose.prod.yml up --build -d
             else
-              cd github/elderwise-be-dev
+              cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
               git fetch origin
-              git checkout $BRANCH || git checkout -b $BRANCH origin/$BRANCH
-              git reset --hard origin/$BRANCH
+              git checkout "$BRANCH" || git checkout -b "$BRANCH" origin/"$BRANCH"
+              git reset --hard origin/"$BRANCH"
               go mod vendor
               docker image prune -f
               echo "Deploying development environment..."
+              if [ ! -f docker-compose.dev.yml ]; then
+                echo "docker-compose.dev.yml not found in $(pwd). Exiting."
+                exit 1
+              fi
               docker-compose -f docker-compose.dev.yml down -v
               docker-compose -f docker-compose.dev.yml pull
               docker-compose -f docker-compose.dev.yml up --build -d
             fi
+
+            echo "Deployment completed successfully."
