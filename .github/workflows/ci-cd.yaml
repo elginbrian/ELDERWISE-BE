@@ -53,7 +53,7 @@ jobs:
             docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:dev
           fi
 
-  deploy:
+    deploy:
     needs: docker
     runs-on: ubuntu-latest
     steps:
@@ -66,9 +66,12 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script: |
             BRANCH=${GITHUB_REF##*/}
+            echo "Deploying branch: $BRANCH"
+
             if [ "$BRANCH" = "main" ]; then
               cd github/elderwise-be-prod
               git fetch origin
+              git checkout $BRANCH || git checkout -b $BRANCH origin/$BRANCH
               git reset --hard origin/$BRANCH
               go mod vendor
               docker image prune -f
@@ -79,6 +82,7 @@ jobs:
             else
               cd github/elderwise-be-dev
               git fetch origin
+              git checkout $BRANCH || git checkout -b $BRANCH origin/$BRANCH
               git reset --hard origin/$BRANCH
               go mod vendor
               docker image prune -f
