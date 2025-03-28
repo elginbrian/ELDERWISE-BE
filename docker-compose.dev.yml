@@ -15,7 +15,9 @@ services:
       - postgres_data_dev:/var/lib/postgresql/data
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile
     container_name: elderwise_backend_dev
     environment:
       - POSTGRES_HOST=postgres
