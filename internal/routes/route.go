@@ -10,8 +10,8 @@ func Setup(app *fiber.App) {
 
 	api.Get("/", dummyHandler)
 
-	api.Post("/auth/register", controllers.RegisterHandler)
-	api.Post("/auth/login", controllers.LoginHandler)
+	api.Post("/auth/register", (&controllers.AuthController{}).RegisterHandler)
+	api.Post("/auth/login", (&controllers.AuthController{}).LoginHandler)
 
 	api.Get("/users/:user_id", controllers.GetUserByID)
 	api.Get("/users/:user_id/caregivers", controllers.GetUserCaregivers)

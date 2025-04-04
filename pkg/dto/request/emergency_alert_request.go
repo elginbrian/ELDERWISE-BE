@@ -2,8 +2,6 @@ package dto
 
 import (
 	"time"
-
-	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 )
 
 type EmergencyAlertRequestDTO struct {
@@ -13,8 +11,4 @@ type EmergencyAlertRequestDTO struct {
 	ElderLat    float64   `json:"elder_lat" validate:"required"`
 	ElderLong   float64   `json:"elder_long" validate:"required"`
 	IsDismissed bool      `json:"is_dismissed default:false"` 
-}
-
-type EmergencyAlertResponseDTO struct {
-	EmergencyAlert models.EmergencyAlert `json:"emergency_alert"`
 }
