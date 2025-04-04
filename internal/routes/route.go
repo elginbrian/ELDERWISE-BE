@@ -6,10 +6,11 @@ import (
 )
 
 type RouteSetup struct {
-	AuthController *controllers.AuthController;
-	CaregiverController *controllers.CaregiverController;
-	ElderController *controllers.ElderController;
-	AreaController *controllers.AreaController;
+	AuthController      *controllers.AuthController
+	CaregiverController *controllers.CaregiverController
+	ElderController     *controllers.ElderController
+	AreaController      *controllers.AreaController
+	StorageController   *controllers.StorageController
 }
 
 func NewRouteSetup(
@@ -17,12 +18,14 @@ func NewRouteSetup(
 	caregiverController *controllers.CaregiverController,
 	elderController *controllers.ElderController,
 	areaController *controllers.AreaController,
+	storageController *controllers.StorageController,
 	) *RouteSetup {
 	return &RouteSetup{
-		AuthController: authController,
+		AuthController:      authController,
 		CaregiverController: caregiverController,
-		ElderController: elderController,
-		AreaController: areaController,
+		ElderController:     elderController,
+		AreaController:      areaController,
+		StorageController:   storageController,
 	}
 }
 
@@ -67,8 +70,10 @@ func (rs *RouteSetup) Setup(app *fiber.App) {
 	api.Get("/emergency-alerts/:emergency_alert_id", dummyHandler)
 	api.Post("/emergency-alerts", dummyHandler)
 	api.Put("/emergency-alerts/:emergency_alert_id", dummyHandler)
+	
+	api.Post("/storage/images", rs.StorageController.ProcessEntityImage) 
 }
 
 func dummyHandler(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"message": "This is a dummy response"})
+	return c.JSON(fiber.Map{"message": "Welcome to Elderwise by Masukin Andre ke Raion"})
 }
