@@ -31,10 +31,10 @@ func main() {
 	app := bootstrap.AppBootstrap(db)
 	
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "*",                                
+		AllowOrigins:     "*",                              
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",     
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
-		AllowCredentials: true,
+		AllowCredentials: false, 
 	}))
 
 	port := os.Getenv("PORT")
