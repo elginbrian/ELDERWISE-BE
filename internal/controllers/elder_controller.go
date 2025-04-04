@@ -4,26 +4,31 @@ import (
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetElderByID(c *fiber.Ctx) error {
+type ElderController struct {
+	service services.ElderService
+}
+
+func NewElderController(service services.ElderService) *ElderController {
+	return &ElderController{service: service}
+}
+
+func (ec *ElderController) GetElderByID(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
-	elder := models.Elder{
-		ElderID:    elderID,
-		UserID:     "dummy-user-id",
-		Name:       "Dummy Elder",
-		Birthdate:  time.Now().AddDate(-70, 0, 0),
-		Gender:     "M",
-		BodyHeight: 160.0,
-		BodyWeight: 60.0,
-		PhotoURL:   "https://example.com/elder.jpg",
-		CreatedAt:  time.Now(),
-		UpdatedAt:  time.Now(),
+	elder, err := ec.service.GetElderByID(elderID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Elder not found",
+			Error:   err.Error(),
+		})
 	}
 
-	responseData := res.ElderResponseDTO{Elder: elder}
+	responseData := res.ElderResponseDTO{Elder: *elder}
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Elder retrieved successfully",
@@ -31,7 +36,7 @@ func GetElderByID(c *fiber.Ctx) error {
 	})
 }
 
-func CreateElder(c *fiber.Ctx) error {
+func (ec *ElderController) CreateElder(c *fiber.Ctx) error {
 	var elder models.Elder
 	if err := c.BodyParser(&elder); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
@@ -41,11 +46,16 @@ func CreateElder(c *fiber.Ctx) error {
 		})
 	}
 
-	elder.ElderID = "dummy-elder-id"
-	elder.CreatedAt = time.Now()
-	elder.UpdatedAt = time.Now()
+	createdElder, err := ec.service.CreateElder(&elder)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to create elder",
+			Error:   err.Error(),
+		})
+	}
 
-	responseData := res.ElderResponseDTO{Elder: elder}
+	responseData := res.ElderResponseDTO{Elder: *createdElder}
 	return c.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Elder created successfully",
@@ -53,7 +63,7 @@ func CreateElder(c *fiber.Ctx) error {
 	})
 }
 
-func UpdateElder(c *fiber.Ctx) error {
+func (ec *ElderController) UpdateElder(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
 	var elder models.Elder
 	if err := c.BodyParser(&elder); err != nil {
@@ -64,13 +74,38 @@ func UpdateElder(c *fiber.Ctx) error {
 		})
 	}
 
-	elder.ElderID = elderID
-	elder.UpdatedAt = time.Now()
+	updatedElder, err := ec.service.UpdateElder(elderID, &elder)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to update elder",
+			Error:   err.Error(),
+		})
+	}
 
-	responseData := res.ElderResponseDTO{Elder: elder}
+	responseData := res.ElderResponseDTO{Elder: *updatedElder}
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Elder updated successfully",
+		Data:    responseData,
+	})
+}
+
+func (ec *ElderController) GetEldersByUserID(c *fiber.Ctx) error {
+	userID := c.Params("user_id")
+	elders, err := ec.service.GetEldersByUserID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to retrieve elders",
+			Error:   err.Error(),
+		})
+	}
+
+	responseData := res.EldersResponseDTO{Elders: elders}
+	return c.JSON(res.ResponseWrapper{
+		Success: true,
+		Message: "Elders retrieved successfully",
 		Data:    responseData,
 	})
 }

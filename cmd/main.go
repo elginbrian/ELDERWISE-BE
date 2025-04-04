@@ -7,6 +7,7 @@ import (
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/internal/bootstrap"
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -28,6 +29,13 @@ func main() {
 	}
 
 	app := bootstrap.AppBootstrap(db)
+	
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     "*",                              
+		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",     
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowCredentials: false, 
+	}))
 
 	port := os.Getenv("PORT")
 	if port == "" {
