@@ -1,16 +1,26 @@
 package controllers
 
 import (
-	"time"
-
+	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	req "github.com/elginbrian/ELDERWISE-BE/pkg/dto/request"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func RegisterHandler(c *fiber.Ctx) error {
-	var req req.RegisterRequestDTO
-	if err := c.BodyParser(&req); err != nil {
+type AuthController struct {
+	authService services.AuthService
+}
+
+func NewAuthController(authService services.AuthService) *AuthController {
+	return &AuthController{
+		authService: authService,
+	}
+}
+
+func (ac *AuthController) RegisterHandler(c *fiber.Ctx) error {
+	var reqDTO req.RegisterRequestDTO
+	if err := c.BodyParser(&reqDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
 			Success: false,
 			Message: "Invalid request payload",
@@ -18,22 +28,36 @@ func RegisterHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	resData := res.RegisterResponseDTO{
-		UserID:    "dummy-user-id",
-		Email:     req.Email,
-		CreatedAt: time.Now(),
+	user := &models.User{
+		Email:    reqDTO.Email,
+		Password: reqDTO.Password,
+	}
+
+	registeredUser, err := ac.authService.Register(user)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Registration failed",
+			Error:   err.Error(),
+		})
+	}
+
+	resDTO := res.RegisterResponseDTO{
+		UserID:    registeredUser.UserID,
+		Email:     registeredUser.Email,
+		CreatedAt: registeredUser.CreatedAt,
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Registration successful",
-		Data:    resData,
+		Data:    resDTO,
 	})
 }
 
-func LoginHandler(c *fiber.Ctx) error {
-	var req req.LoginRequestDTO
-	if err := c.BodyParser(&req); err != nil {
+func (ac *AuthController) LoginHandler(c *fiber.Ctx) error {
+	var reqDTO req.LoginRequestDTO
+	if err := c.BodyParser(&reqDTO); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
 			Success: false,
 			Message: "Invalid request payload",
@@ -41,13 +65,21 @@ func LoginHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	resData := res.LoginResponseDTO{
-		Token: "dummy-jwt-token",
+	token, err := ac.authService.Login(reqDTO.Email, reqDTO.Password)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Login failed",
+			Error:   err.Error(),
+		})
 	}
 
+	resDTO := res.LoginResponseDTO{
+		Token: token,
+	}
 	return c.Status(fiber.StatusOK).JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Login successful",
-		Data:    resData,
+		Data:    resDTO,
 	})
 }
