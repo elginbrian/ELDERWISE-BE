@@ -91,6 +91,8 @@ jobs:
 
             if [ "$BRANCH" = "main" ]; then
               cd github/elderwise-be-prod || { echo "Directory github/elderwise-be-prod not found."; exit 1; }
+              git reset --hard
+              git clean -fd
               git pull
               go mod tidy
               go mod vendor
@@ -105,6 +107,8 @@ jobs:
               docker-compose -f docker-compose.prod.yml up -d
             else
               cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
+              git reset --hard
+              git clean -fd
               git pull
               go mod tidy
               go mod vendor

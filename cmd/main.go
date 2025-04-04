@@ -5,9 +5,8 @@ import (
 	"os"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
+	"github.com/elginbrian/ELDERWISE-BE/internal/bootstrap"
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
-	"github.com/elginbrian/ELDERWISE-BE/internal/routes"
-	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
@@ -28,9 +27,7 @@ func main() {
 		log.Fatal("Auto migration gagal: ", err)
 	}
 
-	app := fiber.New()
-
-	routes.Setup(app)
+	app := bootstrap.AppBootstrap(db)
 
 	port := os.Getenv("PORT")
 	if port == "" {
