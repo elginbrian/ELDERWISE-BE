@@ -1,41 +1,39 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetCaregiverByID(c *fiber.Ctx) error {
+type CaregiverController struct {
+	service services.CaregiverService
+}
+
+func NewCaregiverController(service services.CaregiverService) *CaregiverController {
+	return &CaregiverController{service}
+}
+
+func (ctr *CaregiverController) GetCaregiverByID(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
-
-	caregiver := models.Caregiver{
-		CaregiverID:  caregiverID,
-		UserID:       "dummy-user-id",
-		Name:         "Dummy Caregiver",
-		Birthdate:    time.Now().AddDate(-30, 0, 0),
-		Gender:       "M",
-		PhoneNumber:  "081234567890",
-		ProfileURL:   "https://example.com/caregiver",
-		Relationship: "Child",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
-	}
-
-	responseData := res.CaregiverResponseDTO{
-		Caregiver: caregiver,
+	caregiver, err := ctr.service.GetCaregiverByID(caregiverID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Caregiver not found",
+			Error:   err.Error(),
+		})
 	}
 
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Caregiver retrieved successfully",
-		Data:    responseData,
+		Data:    res.CaregiverResponseDTO{Caregiver: *caregiver},
 	})
 }
 
-func CreateCaregiver(c *fiber.Ctx) error {
+func (ctr *CaregiverController) CreateCaregiver(c *fiber.Ctx) error {
 	var caregiver models.Caregiver
 	if err := c.BodyParser(&caregiver); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
@@ -45,22 +43,22 @@ func CreateCaregiver(c *fiber.Ctx) error {
 		})
 	}
 
-	caregiver.CaregiverID = "dummy-caregiver-id"
-	caregiver.CreatedAt = time.Now()
-	caregiver.UpdatedAt = time.Now()
-
-	responseData := res.CaregiverResponseDTO{
-		Caregiver: caregiver,
+	if err := ctr.service.CreateCaregiver(&caregiver); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to create caregiver",
+			Error:   err.Error(),
+		})
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Caregiver created successfully",
-		Data:    responseData,
+		Data:    res.CaregiverResponseDTO{Caregiver: caregiver},
 	})
 }
 
-func UpdateCaregiver(c *fiber.Ctx) error {
+func (ctr *CaregiverController) UpdateCaregiver(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
 	var caregiver models.Caregiver
 	if err := c.BodyParser(&caregiver); err != nil {
@@ -71,16 +69,17 @@ func UpdateCaregiver(c *fiber.Ctx) error {
 		})
 	}
 
-	caregiver.CaregiverID = caregiverID
-	caregiver.UpdatedAt = time.Now()
-
-	responseData := res.CaregiverResponseDTO{
-		Caregiver: caregiver,
+	if err := ctr.service.UpdateCaregiver(caregiverID, &caregiver); err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to update caregiver",
+			Error:   err.Error(),
+		})
 	}
 
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Caregiver updated successfully",
-		Data:    responseData,
+		Data:    res.CaregiverResponseDTO{Caregiver: caregiver},
 	})
 }
