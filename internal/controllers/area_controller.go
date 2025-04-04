@@ -1,37 +1,39 @@
 package controllers
 
 import (
-	"time"
-
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetAreaByID(c *fiber.Ctx) error {
+type AreaController struct {
+	service services.AreaService
+}
+
+func NewAreaController(service services.AreaService) *AreaController {
+	return &AreaController{service}
+}
+
+func (ac *AreaController) GetAreaByID(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
-	area := models.Area{
-		AreaID:          areaID,
-		ElderID:         "dummy-elder-id",
-		CaregiverID:     "dummy-caregiver-id",
-		CenterLat:       -6.200000,
-		CenterLong:      106.816666,
-		FreeAreaRadius:  100,
-		WatchAreaRadius: 50,
-		IsActive:        true,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+	area, err := ac.service.GetAreaByID(areaID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Area not found",
+			Error:   err.Error(),
+		})
 	}
 
-	responseData := res.AreaResponseDTO{Area: area}
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Area retrieved successfully",
-		Data:    responseData,
+		Data:    res.AreaResponseDTO{Area: *area},
 	})
 }
 
-func CreateArea(c *fiber.Ctx) error {
+func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 	var area models.Area
 	if err := c.BodyParser(&area); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
@@ -41,19 +43,22 @@ func CreateArea(c *fiber.Ctx) error {
 		})
 	}
 
-	area.AreaID = "dummy-area-id"
-	area.CreatedAt = time.Now()
-	area.UpdatedAt = time.Now()
+	if err := ac.service.CreateArea(&area); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to create area",
+			Error:   err.Error(),
+		})
+	}
 
-	responseData := res.AreaResponseDTO{Area: area}
 	return c.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Area created successfully",
-		Data:    responseData,
+		Data:    res.AreaResponseDTO{Area: area},
 	})
 }
 
-func UpdateArea(c *fiber.Ctx) error {
+func (ac *AreaController) UpdateArea(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
 	var area models.Area
 	if err := c.BodyParser(&area); err != nil {
@@ -64,19 +69,31 @@ func UpdateArea(c *fiber.Ctx) error {
 		})
 	}
 
-	area.AreaID = areaID
-	area.UpdatedAt = time.Now()
+	if err := ac.service.UpdateArea(areaID, &area); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to update area",
+			Error:   err.Error(),
+		})
+	}
 
-	responseData := res.AreaResponseDTO{Area: area}
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Area updated successfully",
-		Data:    responseData,
+		Data:    res.AreaResponseDTO{Area: area},
 	})
 }
 
-func DeleteArea(c *fiber.Ctx) error {
+func (ac *AreaController) DeleteArea(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
+	if err := ac.service.DeleteArea(areaID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to delete area",
+			Error:   err.Error(),
+		})
+	}
+
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Area deleted successfully",
@@ -84,39 +101,20 @@ func DeleteArea(c *fiber.Ctx) error {
 	})
 }
 
-func GetAreasByCaregiver(c *fiber.Ctx) error {
+func (ac *AreaController) GetAreasByCaregiver(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
-	areas := []models.Area{
-		{
-			AreaID:          "area1",
-			ElderID:         "dummy-elder-id",
-			CaregiverID:     caregiverID,
-			CenterLat:       -6.200000,
-			CenterLong:      106.816666,
-			FreeAreaRadius:  100,
-			WatchAreaRadius: 50,
-			IsActive:        true,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-		},
-		{
-			AreaID:          "area2",
-			ElderID:         "dummy-elder-id",
-			CaregiverID:     caregiverID,
-			CenterLat:       -6.210000,
-			CenterLong:      106.826666,
-			FreeAreaRadius:  150,
-			WatchAreaRadius: 75,
-			IsActive:        true,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-		},
+	areas, err := ac.service.GetAreasByCaregiver(caregiverID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to retrieve areas",
+			Error:   err.Error(),
+		})
 	}
 
-	responseData := res.AreasResponseDTO{Areas: areas}
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Areas retrieved successfully for caregiver",
-		Data:    responseData,
+		Data:    res.AreasResponseDTO{Areas: areas},
 	})
 }
