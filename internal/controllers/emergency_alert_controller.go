@@ -1,78 +1,123 @@
 package controllers
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetEmergencyAlertByID(c *fiber.Ctx) error {
-	alertID := c.Params("emergency_alert_id")
-	alert := models.EmergencyAlert{
-		EmergencyAlertID: alertID,
-		ElderID:          "dummy-elder-id",
-		CaregiverID:      "dummy-caregiver-id",
-		Datetime:         time.Now(),
-		ElderLat:         -6.200000,
-		ElderLong:        106.816666,
-		IsDismissed:      false,
+type EmergencyAlertController struct {
+	service services.EmergencyAlertService
+	whatsAppService services.WhatsAppService
+}
+
+func NewEmergencyAlertController(service services.EmergencyAlertService, whatsAppService services.WhatsAppService) *EmergencyAlertController {
+	return &EmergencyAlertController{
+		service: service,
+		whatsAppService: whatsAppService,
+	}
+}
+
+func (c *EmergencyAlertController) GetEmergencyAlertByID(ctx *fiber.Ctx) error {
+	alertID := ctx.Params("emergency_alert_id")
+	alert, err := c.service.GetEmergencyAlertByID(alertID)
+	if err != nil {
+		return ctx.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Emergency alert not found",
+			Error:   err.Error(),
+		})
 	}
 
-	responseData := res.EmergencyAlertResponseDTO{
-		EmergencyAlert: alert,
-	}
-	return c.JSON(res.ResponseWrapper{
+	return ctx.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Emergency alert retrieved successfully",
-		Data:    responseData,
+		Data:    res.EmergencyAlertResponseDTO{EmergencyAlert: *alert},
 	})
 }
 
-func CreateEmergencyAlert(c *fiber.Ctx) error {
+func (c *EmergencyAlertController) CreateEmergencyAlert(ctx *fiber.Ctx) error {
 	var alert models.EmergencyAlert
-	if err := c.BodyParser(&alert); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+	if err := ctx.BodyParser(&alert); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
 			Success: false,
 			Message: "Invalid request payload",
 			Error:   err.Error(),
 		})
 	}
 
-	alert.EmergencyAlertID = "dummy-alert-id"
-	alert.Datetime = time.Now()
-
-	responseData := res.EmergencyAlertResponseDTO{
-		EmergencyAlert: alert,
+	if err := c.service.CreateEmergencyAlert(&alert); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to create emergency alert",
+			Error:   err.Error(),
+		})
 	}
-	return c.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
+
+	return ctx.Status(fiber.StatusCreated).JSON(res.ResponseWrapper{
 		Success: true,
-		Message: "Emergency alert created successfully",
-		Data:    responseData,
+		Message: "Emergency alert created successfully and notification sent",
+		Data:    res.EmergencyAlertResponseDTO{EmergencyAlert: alert},
 	})
 }
 
-func UpdateEmergencyAlert(c *fiber.Ctx) error {
-	alertID := c.Params("emergency_alert_id")
+func (c *EmergencyAlertController) UpdateEmergencyAlert(ctx *fiber.Ctx) error {
+	alertID := ctx.Params("emergency_alert_id")
 	var alert models.EmergencyAlert
-	if err := c.BodyParser(&alert); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+	if err := ctx.BodyParser(&alert); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
 			Success: false,
 			Message: "Invalid request payload",
 			Error:   err.Error(),
 		})
 	}
 
-	alert.EmergencyAlertID = alertID
-	alert.Datetime = time.Now()
-
-	responseData := res.EmergencyAlertResponseDTO{
-		EmergencyAlert: alert,
+	if err := c.service.UpdateEmergencyAlert(alertID, &alert); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to update emergency alert",
+			Error:   err.Error(),
+		})
 	}
-	return c.JSON(res.ResponseWrapper{
+
+	return ctx.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Emergency alert updated successfully",
-		Data:    responseData,
+		Data:    res.EmergencyAlertResponseDTO{EmergencyAlert: alert},
+	})
+}
+
+func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
+	phoneNumber := "+6285749806571"
+	
+	mockTime := time.Now()
+	mockLat := -6.200000  
+	mockLong := 106.816666 
+	
+	message := fmt.Sprintf("‼️ TEST EMERGENCY ALERT ‼️\n\nThis is a test alert triggered at %s.\n\nMock Location: https://maps.google.com/?q=%f,%f\n\nThis is only a test, no action required.",
+		mockTime.Format("Mon, 02 Jan 2006 15:04:05"),
+		mockLat,
+		mockLong,
+	)
+	
+	if err := c.whatsAppService.SendMessage(phoneNumber, message); err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to send test WhatsApp notification",
+			Error:   err.Error(),
+		})
+	}
+	
+	return ctx.Status(fiber.StatusOK).JSON(res.ResponseWrapper{
+		Success: true,
+		Message: "Test emergency alert notification sent to " + phoneNumber,
+		Data: map[string]interface{}{
+			"recipient": phoneNumber,
+			"sent_at": mockTime,
+		},
 	})
 }
