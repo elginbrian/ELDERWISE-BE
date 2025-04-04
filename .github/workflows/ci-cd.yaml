@@ -1,0 +1,126 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.0
+
+      - name: Install dependencies and run tests
+        run: |
+          go mod tidy
+          go test ./...
+
+  docker:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
+    env:
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          echo "Building image for branch: $BRANCH"
+          case "$BRANCH" in
+            "main")
+              echo "Building production image..."
+              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:latest -f dockerfile .
+              docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:latest
+              ;;
+            "dev")
+              echo "Building development image..."
+              docker build -t ${{ secrets.DOCKER_USERNAME }}/elderwise:dev -f dockerfile .
+              docker push ${{ secrets.DOCKER_USERNAME }}/elderwise:dev
+              ;;
+            *)
+              echo "Branch not recognized, skipping Docker build."
+              ;;
+          esac
+
+  deploy:
+    needs: docker
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' }}
+    env:
+      BRANCH: ${{ github.ref_name }}
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script: |
+            set -e
+            trap 'echo "An error occurred. Exiting..." && exit 1' ERR
+
+            BRANCH_FULL="${{ github.ref }}"
+            BRANCH=$(basename "$BRANCH_FULL")
+            if [ -z "$BRANCH" ]; then
+              echo "Branch name is empty. Deploying development environment."
+              BRANCH="dev"
+            fi
+
+            echo "Deploying branch: $BRANCH"
+
+            if [ "$BRANCH" = "main" ]; then
+              cd github/elderwise-be-prod || { echo "Directory github/elderwise-be-prod not found."; exit 1; }
+              git reset --hard
+              git clean -fd
+              git pull
+              go mod tidy
+              go mod vendor
+              docker image prune -f
+              echo "Deploying production environment from Docker Hub image..."
+              if [ ! -f docker-compose.prod.yml ]; then
+                echo "docker-compose.prod.yml not found in $(pwd). Exiting."
+                exit 1
+              fi
+              docker-compose -f docker-compose.prod.yml down -v
+              docker-compose -f docker-compose.prod.yml build
+              docker-compose -f docker-compose.prod.yml up -d
+            else
+              cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
+              git reset --hard
+              git clean -fd
+              git pull
+              go mod tidy
+              go mod vendor
+              docker image prune -f
+              echo "Deploying development environment from Docker Hub image..."
+              if [ ! -f docker-compose.dev.yml ]; then
+                echo "docker-compose.dev.yml not found in $(pwd). Exiting."
+                exit 1
+              fi
+              docker-compose -f docker-compose.dev.yml down -v
+              docker-compose -f docker-compose.dev.yml build
+              docker-compose -f docker-compose.dev.yml up -d
+            fi
+
+            echo "Deployment completed successfully."
