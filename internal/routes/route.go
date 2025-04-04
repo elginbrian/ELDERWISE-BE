@@ -5,13 +5,23 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func Setup(app *fiber.App) {
+type RouteSetup struct {
+	AuthController *controllers.AuthController
+}
+
+func NewRouteSetup(authController *controllers.AuthController) *RouteSetup {
+	return &RouteSetup{
+		AuthController: authController,
+	}
+}
+
+func (rs *RouteSetup) Setup(app *fiber.App) {
 	api := app.Group("/api/v1")
 
 	api.Get("/", dummyHandler)
 
-	api.Post("/auth/register", (&controllers.AuthController{}).RegisterHandler)
-	api.Post("/auth/login", (&controllers.AuthController{}).LoginHandler)
+	api.Post("/auth/register", rs.AuthController.RegisterHandler)
+	api.Post("/auth/login", rs.AuthController.LoginHandler)
 
 	api.Get("/users/:user_id", controllers.GetUserByID)
 	api.Get("/users/:user_id/caregivers", controllers.GetUserCaregivers)
