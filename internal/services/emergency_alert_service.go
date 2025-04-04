@@ -17,23 +17,23 @@ type EmergencyAlertService interface {
 }
 
 type emergencyAlertService struct {
-	alertRepo        repository.EmergencyAlertRepository
-	elderRepo        repository.ElderRepository
-	caregiverRepo    repository.CaregiverRepository
-	whatsAppService  WhatsAppService
+	alertRepo      repository.EmergencyAlertRepository
+	elderRepo      repository.ElderRepository
+	caregiverRepo  repository.CaregiverRepository
+	smsService     SMSService
 }
 
 func NewEmergencyAlertService(
 	alertRepo repository.EmergencyAlertRepository,
 	elderRepo repository.ElderRepository,
 	caregiverRepo repository.CaregiverRepository,
-	whatsAppService WhatsAppService,
+	smsService SMSService,
 ) EmergencyAlertService {
 	return &emergencyAlertService{
-		alertRepo:        alertRepo,
-		elderRepo:        elderRepo,
-		caregiverRepo:    caregiverRepo,
-		whatsAppService:  whatsAppService,
+		alertRepo:      alertRepo,
+		elderRepo:      elderRepo,
+		caregiverRepo:  caregiverRepo,
+		smsService:     smsService,
 	}
 }
 
@@ -83,15 +83,15 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 		return fmt.Errorf("failed to get caregiver info: %w", err)
 	}
 	
-	message := fmt.Sprintf("‼️ EMERGENCY ALERT ‼️\n\nElder: %s has triggered an emergency alert at %s.\n\nLocation: https://maps.google.com/?q=%f,%f\n\nPlease contact them immediately or seek help if needed.",
+	message := fmt.Sprintf("⚠️ EMERGENCY ALERT ⚠️\n\nElder: %s has triggered an emergency alert at %s.\n\nLocation: https://maps.google.com/?q=%f,%f\n\nPlease contact them immediately or seek help if needed.",
 		elder.Name,
 		alert.Datetime.Format("Mon, 02 Jan 2006 15:04:05"),
 		alert.ElderLat,
 		alert.ElderLong,
 	)
 	
-	if err := s.whatsAppService.SendMessage(caregiver.PhoneNumber, message); err != nil {
-		return fmt.Errorf("failed to send WhatsApp notification: %w", err)
+	if err := s.smsService.SendMessage(caregiver.PhoneNumber, message); err != nil {
+		return fmt.Errorf("failed to send SMS notification: %w", err)
 	}
 	
 	return nil

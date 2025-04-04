@@ -12,13 +12,13 @@ import (
 
 type EmergencyAlertController struct {
 	service services.EmergencyAlertService
-	whatsAppService services.WhatsAppService
+	smsService services.SMSService
 }
 
-func NewEmergencyAlertController(service services.EmergencyAlertService, whatsAppService services.WhatsAppService) *EmergencyAlertController {
+func NewEmergencyAlertController(service services.EmergencyAlertService, smsService services.SMSService) *EmergencyAlertController {
 	return &EmergencyAlertController{
 		service: service,
-		whatsAppService: whatsAppService,
+		smsService: smsService,
 	}
 }
 
@@ -94,27 +94,36 @@ func (c *EmergencyAlertController) UpdateEmergencyAlert(ctx *fiber.Ctx) error {
 func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	phoneNumber := "+6285749806571"
 	
+	if phone := ctx.Query("phone"); phone != "" {
+		phoneNumber = phone
+	}
+	
 	mockTime := time.Now()
 	mockLat := -6.200000  
 	mockLong := 106.816666 
 	
-	message := fmt.Sprintf("‼️ TEST EMERGENCY ALERT ‼️\n\nThis is a test alert triggered at %s.\n\nMock Location: https://maps.google.com/?q=%f,%f\n\nThis is only a test, no action required.",
+	message := fmt.Sprintf("⚠️ TEST EMERGENCY ALERT ⚠️\n\nThis is a test alert triggered at %s.\n\nMock Location: https://maps.google.com/?q=%f,%f\n\nThis is only a test, no action required.",
 		mockTime.Format("Mon, 02 Jan 2006 15:04:05"),
 		mockLat,
 		mockLong,
 	)
 	
-	if err := c.whatsAppService.SendMessage(phoneNumber, message); err != nil {
+	fmt.Printf("Sending test SMS to %s\n", phoneNumber)
+	if err := c.smsService.SendMessage(phoneNumber, message); err != nil {
+		fmt.Printf("Error sending SMS: %v\n", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
 			Success: false,
-			Message: "Failed to send test WhatsApp notification",
+			Message: "Failed to send test SMS notification",
 			Error:   err.Error(),
+			Data: map[string]interface{}{
+				"recipient": phoneNumber,
+			},
 		})
 	}
 	
 	return ctx.Status(fiber.StatusOK).JSON(res.ResponseWrapper{
 		Success: true,
-		Message: "Test emergency alert notification sent to " + phoneNumber,
+		Message: "Test emergency alert SMS sent to " + phoneNumber,
 		Data: map[string]interface{}{
 			"recipient": phoneNumber,
 			"sent_at": mockTime,
