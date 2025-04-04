@@ -8,15 +8,18 @@ import (
 type RouteSetup struct {
 	AuthController *controllers.AuthController;
 	CaregiverController *controllers.CaregiverController;
+	ElderController *controllers.ElderController;
 }
 
 func NewRouteSetup(
 	authController *controllers.AuthController,
 	caregiverController *controllers.CaregiverController,
+	elderController *controllers.ElderController,
 	) *RouteSetup {
 	return &RouteSetup{
 		AuthController: authController,
 		CaregiverController: caregiverController,
+		ElderController: elderController,
 	}
 }
 
@@ -36,9 +39,9 @@ func (rs *RouteSetup) Setup(app *fiber.App) {
 	api.Post("/caregivers", rs.CaregiverController.CreateCaregiver)
 	api.Put("/caregivers/:caregiver_id", rs.CaregiverController.UpdateCaregiver)
 
-	api.Get("/elders/:elder_id", controllers.GetElderByID)
-	api.Post("/elders", controllers.CreateElder)
-	api.Put("/elders/:elder_id", controllers.UpdateElder)
+	api.Get("/elders/:elder_id", rs.ElderController.GetElderByID)
+	api.Post("/elders", rs.ElderController.CreateElder)
+	api.Put("/elders/:elder_id", rs.ElderController.UpdateElder)
 	api.Get("/elders/:elder_id/areas", controllers.GetElderAreas)
 	api.Get("/elders/:elder_id/location-history", controllers.GetElderLocationHistory)
 	api.Get("/elders/:elder_id/agendas", controllers.GetElderAgendas)

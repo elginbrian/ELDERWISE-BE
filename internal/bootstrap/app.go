@@ -13,14 +13,17 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	
 	authRepo := repository.NewAuthRepository(db)
 	caregiverRepo := repository.NewCaregiverRepository(db)
+	elderRepo := repository.NewElderRepository(db)
 
 	authService := services.NewAuthService(authRepo)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
+	elderService := services.NewElderService(elderRepo)
 
 	authController := controllers.NewAuthController(authService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
+	elderController := controllers.NewElderController(elderService)
 	
-	routeSetup := routes.NewRouteSetup(authController, caregiverController)
+	routeSetup := routes.NewRouteSetup(authController, caregiverController, elderController)
 
 	app := fiber.New()
 	routeSetup.Setup(app)
