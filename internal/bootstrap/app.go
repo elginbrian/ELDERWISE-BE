@@ -12,6 +12,7 @@ import (
 
 func AppBootstrap(db *gorm.DB) *fiber.App {
 	
+	// Repositories
 	authRepo := repository.NewAuthRepository(db)
 	caregiverRepo := repository.NewCaregiverRepository(db)
 	elderRepo := repository.NewElderRepository(db)
@@ -19,10 +20,12 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	storageRepo := repository.NewStorageRepository(db)
 	emergencyAlertRepo := repository.NewEmergencyAlertRepository(db)
 
+	// Configs
 	supabaseConfig := config.NewSupabaseConfig()
-	whatsAppConfig := config.NewWhatsAppConfig()
+	smsConfig := config.NewSMSConfig()
 	
-	whatsAppService := services.NewWhatsAppService(whatsAppConfig)
+	// Services
+	smsService := services.NewSMSService(smsConfig)
 	authService := services.NewAuthService(authRepo)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
 	elderService := services.NewElderService(elderRepo)
@@ -32,9 +35,10 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		emergencyAlertRepo, 
 		elderRepo, 
 		caregiverRepo, 
-		whatsAppService,
+		smsService,
 	)
 
+	// Controllers
 	authController := controllers.NewAuthController(authService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
 	elderController := controllers.NewElderController(elderService)
@@ -42,7 +46,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	storageController := controllers.NewStorageController(storageService, supabaseConfig)
 	emergencyAlertController := controllers.NewEmergencyAlertController(
 		emergencyAlertService, 
-		whatsAppService, 
+		smsService, 
 	)
 	
 	routeSetup := routes.NewRouteSetup(
