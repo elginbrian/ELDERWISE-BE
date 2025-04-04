@@ -17,20 +17,33 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	elderRepo := repository.NewElderRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
 	storageRepo := repository.NewStorageRepository(db)
+	emergencyAlertRepo := repository.NewEmergencyAlertRepository(db)
 
 	supabaseConfig := config.NewSupabaseConfig()
+	whatsAppConfig := config.NewWhatsAppConfig()
 	
+	whatsAppService := services.NewWhatsAppService(whatsAppConfig)
 	authService := services.NewAuthService(authRepo)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
 	elderService := services.NewElderService(elderRepo)
 	areaService := services.NewAreaService(areaRepo)
 	storageService := services.NewStorageService(storageRepo, elderRepo, caregiverRepo, supabaseConfig)
+	emergencyAlertService := services.NewEmergencyAlertService(
+		emergencyAlertRepo, 
+		elderRepo, 
+		caregiverRepo, 
+		whatsAppService,
+	)
 
 	authController := controllers.NewAuthController(authService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
 	elderController := controllers.NewElderController(elderService)
 	areaController := controllers.NewAreaController(areaService)
 	storageController := controllers.NewStorageController(storageService, supabaseConfig)
+	emergencyAlertController := controllers.NewEmergencyAlertController(
+		emergencyAlertService, 
+		whatsAppService, 
+	)
 	
 	routeSetup := routes.NewRouteSetup(
 		authController, 
@@ -38,6 +51,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		elderController, 
 		areaController,
 		storageController,
+		emergencyAlertController,
 	)
 
 	app := fiber.New()
