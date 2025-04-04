@@ -102,8 +102,8 @@ func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	mockLat := -6.200000  
 	mockLong := 106.816666 
 	
-	message := fmt.Sprintf("⚠️ TEST EMERGENCY ALERT ⚠️\n\nThis is a test alert triggered at %s.\n\nMock Location: https://maps.google.com/?q=%f,%f\n\nThis is only a test, no action required.",
-		mockTime.Format("Mon, 02 Jan 2006 15:04:05"),
+	message := fmt.Sprintf("⚠️TEST ALERT! Time: %s. Map: https://maps.google.com/?q=%f,%f No action needed.",
+		mockTime.Format("02/01 15:04"),
 		mockLat,
 		mockLong,
 	)
