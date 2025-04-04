@@ -83,9 +83,9 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 		return fmt.Errorf("failed to get caregiver info: %w", err)
 	}
 	
-	message := fmt.Sprintf("⚠️ EMERGENCY ALERT ⚠️\n\nElder: %s has triggered an emergency alert at %s.\n\nLocation: https://maps.google.com/?q=%f,%f\n\nPlease contact them immediately or seek help if needed.",
+	message := fmt.Sprintf("⚠️ALERT: %s needs help! %s. Map: https://maps.google.com/?q=%f,%f",
 		elder.Name,
-		alert.Datetime.Format("Mon, 02 Jan 2006 15:04:05"),
+		alert.Datetime.Format("02/01 15:04"),
 		alert.ElderLat,
 		alert.ElderLong,
 	)
