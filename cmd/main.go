@@ -23,6 +23,7 @@ func main() {
 		&models.EmergencyAlert{},
 		&models.LocationHistory{},
 		&models.LocationHistoryPoint{},
+		&models.StorageFile{}, 
 	)
 	if err != nil {
 		log.Fatal("Auto migration gagal: ", err)
