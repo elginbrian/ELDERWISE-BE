@@ -6,10 +6,10 @@ import (
 )
 
 type RouteSetup struct {
-	AuthController *controllers.AuthController;
-	CaregiverController *controllers.CaregiverController;
-	ElderController *controllers.ElderController;
-	AreaController *controllers.AreaController;
+	AuthController *controllers.AuthController
+	CaregiverController *controllers.CaregiverController
+	ElderController *controllers.ElderController
+	AreaController *controllers.AreaController
 }
 
 func NewRouteSetup(
