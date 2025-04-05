@@ -18,7 +18,7 @@ func NewEmailConfig() *EmailConfig {
 		Port:      "587",
 		Username:  os.Getenv("EMAIL_USERNAME"),
 		Password:  os.Getenv("EMAIL_PASSWORD"),
-		FromEmail: os.Getenv("EMAIL_USERNAME"), // Gmail sends from the authenticated user
+		FromEmail: os.Getenv("EMAIL_USERNAME"),
 		FromName:  os.Getenv("EMAIL_FROM_NAME"),
 		Secure:    true,
 	}

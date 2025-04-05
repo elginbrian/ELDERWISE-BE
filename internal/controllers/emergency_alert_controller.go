@@ -95,7 +95,7 @@ func (c *EmergencyAlertController) UpdateEmergencyAlert(ctx *fiber.Ctx) error {
 
 func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	userID := ctx.Query("user_id")
-	email := "test@example.com" 
+	email := "elginbrian49@gmail.com" 
 	
 	if userID != "" {
 		
