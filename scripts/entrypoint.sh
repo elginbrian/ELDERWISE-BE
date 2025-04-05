@@ -4,8 +4,8 @@ set -e
 echo "===== Starting Elderwise Application ====="
 echo "Running network connectivity tests..."
 
-go build -o /tmp/network_test /app/scripts/network_test.go
-/tmp/network_test -internal=true -gmail=true -google=true
+go build -o /tmp/network_check /app/scripts/network_check.go
+/tmp/network_check -internal=true -gmail=true -google=true
 
 TEST_EXIT_CODE=$?
 if [ $TEST_EXIT_CODE -ne 0 ]; then
