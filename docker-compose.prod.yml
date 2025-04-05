@@ -14,6 +14,8 @@ services:
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     restart: always
+    networks:
+      - elderwise_network
 
   app:
     image: elginbrian/elderwise:latest
@@ -33,15 +35,26 @@ services:
       - EMAIL_PASSWORD=kdlklyerxgrcaxwg
       - EMAIL_FROM_NAME=Elderwise Alert System
       - EMAIL_PORT=465
+      - NETWORK_TEST_ON_STARTUP=true
     ports:
       - "4001:3000"
     depends_on:
       - postgres
     restart: always
-    dns:
-      - 8.8.8.8
-      - 8.8.4.4
-    network_mode: "bridge"
+    networks:
+      - elderwise_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  elderwise_network:
+    driver: bridge
 
 volumes:
   postgres_data_prod:

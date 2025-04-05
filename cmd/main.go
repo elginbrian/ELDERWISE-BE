@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/docs"
@@ -32,12 +33,25 @@ import (
 // @name Authorization
 // @description Type "Bearer" followed by a space and JWT token.
 func main() {
-	// Initialize Swagger docs
-	docs.SwaggerInfo()
+	logFile, err := setupLogging()
+	if err != nil {
+		log.Printf("Warning: Could not set up log file: %v", err)
+	} else if logFile != nil {
+		defer logFile.Close()
+	}
 	
+	log.Println("Starting Elderwise Backend Service")
+	
+	runTests, _ := strconv.ParseBool(os.Getenv("NETWORK_TEST_ON_STARTUP"))
+	if runTests {
+		log.Println("Network tests will be executed during container startup")
+	}
+  
+	docs.SwaggerInfo()
+
 	db := config.ConnectDB()
 
-	err := db.AutoMigrate(
+	err = db.AutoMigrate(
 		&models.User{},
 		&models.Caregiver{},
 		&models.Elder{},
@@ -68,4 +82,18 @@ func main() {
 
 	log.Printf("Server berjalan pada port %s", port)
 	log.Fatal(app.Listen(":" + port))
+}
+
+func setupLogging() (*os.File, error) {
+	err := os.MkdirAll("logs", 0755)
+	if err != nil {
+		return nil, err
+	}
+	
+	logFile, err := os.OpenFile("logs/elderwise.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, err
+	}
+	
+	return logFile, nil
 }

@@ -27,6 +27,16 @@ jobs:
           go mod tidy
           go test ./...
 
+      - name: Run network tests
+        run: |
+          echo "Testing network connectivity..."
+          go run scripts/network_test.go -internal=false -gmail=true -google=true
+          if [ $? -ne 0 ]; then
+            echo "Warning: Network tests failed, but continuing with build"
+          else
+            echo "Network tests successful"
+          fi
+
   docker:
     needs: build-and-test
     runs-on: ubuntu-latest
