@@ -13,9 +13,14 @@ type EmailConfig struct {
 }
 
 func NewEmailConfig() *EmailConfig {
+	port := os.Getenv("EMAIL_PORT")
+	if port == "" {
+		port = "465"
+	}
+	
 	return &EmailConfig{
 		Host:      "smtp.gmail.com",
-		Port:      "587",
+		Port:      port,
 		Username:  os.Getenv("EMAIL_USERNAME"),
 		Password:  os.Getenv("EMAIL_PASSWORD"),
 		FromEmail: os.Getenv("EMAIL_USERNAME"),
