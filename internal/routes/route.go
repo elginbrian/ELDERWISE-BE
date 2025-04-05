@@ -3,6 +3,7 @@ package routes
 import (
 	"github.com/elginbrian/ELDERWISE-BE/internal/controllers"
 	"github.com/gofiber/fiber/v2"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 type RouteSetup struct {
@@ -33,6 +34,8 @@ func NewRouteSetup(
 }
 
 func (rs *RouteSetup) Setup(app *fiber.App) {
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	
 	api := app.Group("/api/v1")
 
 	api.Get("/", dummyHandler)

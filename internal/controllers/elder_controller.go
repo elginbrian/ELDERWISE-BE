@@ -17,6 +17,17 @@ func NewElderController(service services.ElderService) *ElderController {
 	return &ElderController{service: service}
 }
 
+// GetElderByID godoc
+// @Summary Get elder by ID
+// @Description Get an elder's details by their ID
+// @Tags elders
+// @Accept json
+// @Produce json
+// @Param elder_id path string true "Elder ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.ElderResponseDTO} "Elder retrieved successfully"
+// @Failure 404 {object} res.ResponseWrapper "Elder not found"
+// @Router /elders/{elder_id} [get]
+// @Security Bearer
 func (ec *ElderController) GetElderByID(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
 	elder, err := ec.service.GetElderByID(elderID)
@@ -36,6 +47,18 @@ func (ec *ElderController) GetElderByID(c *fiber.Ctx) error {
 	})
 }
 
+// CreateElder godoc
+// @Summary Create a new elder
+// @Description Create a new elder with the provided information
+// @Tags elders
+// @Accept json
+// @Produce json
+// @Param elder body models.Elder true "Elder information"
+// @Success 201 {object} res.ResponseWrapper{data=res.ElderResponseDTO} "Elder created successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to create elder"
+// @Router /elders [post]
+// @Security Bearer
 func (ec *ElderController) CreateElder(c *fiber.Ctx) error {
 	var elder models.Elder
 	if err := c.BodyParser(&elder); err != nil {
@@ -63,6 +86,19 @@ func (ec *ElderController) CreateElder(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateElder godoc
+// @Summary Update an elder
+// @Description Update an elder with the provided information
+// @Tags elders
+// @Accept json
+// @Produce json
+// @Param elder_id path string true "Elder ID"
+// @Param elder body models.Elder true "Elder information"
+// @Success 200 {object} res.ResponseWrapper{data=res.ElderResponseDTO} "Elder updated successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 404 {object} res.ResponseWrapper "Elder not found"
+// @Router /elders/{elder_id} [put]
+// @Security Bearer
 func (ec *ElderController) UpdateElder(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
 	var elder models.Elder
@@ -91,6 +127,17 @@ func (ec *ElderController) UpdateElder(c *fiber.Ctx) error {
 	})
 }
 
+// GetEldersByUserID godoc
+// @Summary Get elders by user ID
+// @Description Get all elders associated with a user
+// @Tags elders
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.EldersResponseDTO} "Elders retrieved successfully"
+// @Failure 500 {object} res.ResponseWrapper "Failed to retrieve elders"
+// @Router /users/{user_id}/elders [get]
+// @Security Bearer
 func (ec *ElderController) GetEldersByUserID(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 	elders, err := ec.service.GetEldersByUserID(userID)
