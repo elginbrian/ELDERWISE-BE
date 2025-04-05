@@ -20,7 +20,7 @@ VOLUME ["/app"]
 
 COPY --from=builder /app/elderwise .
 COPY --from=builder /app/scripts/entrypoint.sh .
-COPY --from=builder /app/scripts/network_test.go ./scripts/
+COPY --from=builder /app/scripts/network_check.go ./scripts/
 
 RUN chmod +x /app/entrypoint.sh /app/elderwise
 
