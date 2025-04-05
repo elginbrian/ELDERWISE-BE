@@ -29,16 +29,31 @@ func NewEmailService(config *config.EmailConfig) EmailService {
 
 func (s *emailService) SendMessageAsync(to, subject, message string) {
 	go func() {
-		if err := s.SendMessage(to, subject, message); err != nil {
-			log.Printf("ERROR: Async email sending failed: %v", err)
+		// Try multiple times with increasing delays
+		maxRetries := 3
+		var lastErr error
+		
+		for i := 0; i < maxRetries; i++ {
+			if err := s.SendMessage(to, subject, message); err != nil {
+				log.Printf("ERROR: Email attempt %d failed: %v", i+1, err)
+				lastErr = err
+				// Exponential backoff
+				time.Sleep(time.Duration(2*i+1) * time.Second)
+				continue
+			}
 			
+			log.Printf("SUCCESS: Async email to %s successfully sent on attempt %d", to, i+1)
+			return
+		}
+		
+		log.Printf("ERROR: All %d attempts to send email failed. Last error: %v", maxRetries, lastErr)
+		
+		if lastErr != nil {
 			if altErr := s.sendViaSSL(to, subject, message); altErr != nil {
 				log.Printf("ERROR: Alternative email method also failed: %v", altErr)
 			} else {
 				log.Printf("SUCCESS: Email sent via alternative method to %s", to)
 			}
-		} else {
-			log.Printf("SUCCESS: Async email to %s successfully sent", to)
 		}
 	}()
 }
@@ -47,12 +62,10 @@ func (s *emailService) SendMessage(to, subject, message string) error {
 	log.Printf("ATTEMPT: Sending email to %s with subject: %s", to, subject)
 	log.Printf("DEBUG: Using Gmail account: %s", s.config.Username)
 	
-	// Try the SSL method first if we're using port 465
 	if s.config.Port == "465" {
 		return s.sendViaSSL(to, subject, message)
 	}
 	
-	// Otherwise use the standard TLS approach
 	addr := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
 	
 	auth := smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)
@@ -92,7 +105,6 @@ func (s *emailService) SendMessage(to, subject, message string) error {
 	}
 	defer client.Close()
 	
-	// Start TLS for port 587
 	tlsConfig := &tls.Config{
 		ServerName: s.config.Host,
 		MinVersion: tls.VersionTLS12,
@@ -206,4 +218,17 @@ func (s *emailService) sendViaSSL(to, subject, message string) error {
 	
 	log.Printf("SUCCESS: Email sent via SSL to %s", to)
 	return nil
+}
+
+// Add a new helper method to determine if error is a network error
+func isNetworkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	_, isNetErr := err.(net.Error)
+	return isNetErr || 
+		strings.Contains(err.Error(), "dial tcp") || 
+		strings.Contains(err.Error(), "connection") ||
+		strings.Contains(err.Error(), "timeout")
 }
