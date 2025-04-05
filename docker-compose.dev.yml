@@ -31,13 +31,20 @@ services:
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
       - EMAIL_USERNAME=elginbrian94@gmail.com
-      - EMAIL_PASSWORD=kdlk lyer xgrc axwg
+      - EMAIL_PASSWORD=kdlklyerxgrcaxwg
       - EMAIL_FROM_NAME=Elderwise Alert System
+      - EMAIL_PORT=465
     ports:
       - "4000:3000"
     depends_on:
       - postgres
     restart: always
+    # Add specific DNS settings to ensure Gmail connectivity
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    # Ensure we have internet access
+    network_mode: "bridge"
 
 volumes:
   postgres_data_dev:
