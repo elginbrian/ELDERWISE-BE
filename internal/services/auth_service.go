@@ -7,6 +7,7 @@ import (
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"github.com/elginbrian/ELDERWISE-BE/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,6 +32,8 @@ func (s *authService) Register(user *models.User) (*models.User, error) {
 		return nil, errors.New("email already exists")
 	}
 
+	user.UserID = uuid.New().String()
+	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err

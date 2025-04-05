@@ -15,6 +15,17 @@ func NewAreaController(service services.AreaService) *AreaController {
 	return &AreaController{service}
 }
 
+// GetAreaByID godoc
+// @Summary Get area by ID
+// @Description Get an area's details by its ID
+// @Tags areas
+// @Accept json
+// @Produce json
+// @Param area_id path string true "Area ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.AreaResponseDTO} "Area retrieved successfully"
+// @Failure 404 {object} res.ResponseWrapper "Area not found"
+// @Router /areas/{area_id} [get]
+// @Security Bearer
 func (ac *AreaController) GetAreaByID(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
 	area, err := ac.service.GetAreaByID(areaID)
@@ -33,6 +44,18 @@ func (ac *AreaController) GetAreaByID(c *fiber.Ctx) error {
 	})
 }
 
+// CreateArea godoc
+// @Summary Create a new area
+// @Description Create a new area with the provided information
+// @Tags areas
+// @Accept json
+// @Produce json
+// @Param area body models.Area true "Area information"
+// @Success 201 {object} res.ResponseWrapper{data=res.AreaResponseDTO} "Area created successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to create area"
+// @Router /areas [post]
+// @Security Bearer
 func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 	var area models.Area
 	if err := c.BodyParser(&area); err != nil {
@@ -58,6 +81,19 @@ func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateArea godoc
+// @Summary Update an area
+// @Description Update an area with the provided information
+// @Tags areas
+// @Accept json
+// @Produce json
+// @Param area_id path string true "Area ID"
+// @Param area body models.Area true "Area information"
+// @Success 200 {object} res.ResponseWrapper{data=res.AreaResponseDTO} "Area updated successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to update area"
+// @Router /areas/{area_id} [put]
+// @Security Bearer
 func (ac *AreaController) UpdateArea(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
 	var area models.Area
@@ -84,6 +120,17 @@ func (ac *AreaController) UpdateArea(c *fiber.Ctx) error {
 	})
 }
 
+// DeleteArea godoc
+// @Summary Delete an area
+// @Description Delete an area by its ID
+// @Tags areas
+// @Accept json
+// @Produce json
+// @Param area_id path string true "Area ID"
+// @Success 200 {object} res.ResponseWrapper{data=string} "Area deleted successfully"
+// @Failure 500 {object} res.ResponseWrapper "Failed to delete area"
+// @Router /areas/{area_id} [delete]
+// @Security Bearer
 func (ac *AreaController) DeleteArea(c *fiber.Ctx) error {
 	areaID := c.Params("area_id")
 	if err := ac.service.DeleteArea(areaID); err != nil {
@@ -101,6 +148,17 @@ func (ac *AreaController) DeleteArea(c *fiber.Ctx) error {
 	})
 }
 
+// GetAreasByCaregiver godoc
+// @Summary Get areas by caregiver ID
+// @Description Get all areas associated with a caregiver
+// @Tags areas
+// @Accept json
+// @Produce json
+// @Param caregiver_id path string true "Caregiver ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.AreasResponseDTO} "Areas retrieved successfully"
+// @Failure 500 {object} res.ResponseWrapper "Failed to retrieve areas"
+// @Router /caregivers/{caregiver_id}/areas [get]
+// @Security Bearer
 func (ac *AreaController) GetAreasByCaregiver(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
 	areas, err := ac.service.GetAreasByCaregiver(caregiverID)
