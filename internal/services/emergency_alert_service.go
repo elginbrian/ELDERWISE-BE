@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
@@ -84,7 +85,6 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 		return fmt.Errorf("failed to get caregiver info: %w", err)
 	}
 	
-	// Get user information for the caregiver to get the email
 	user, err := s.userRepo.GetUserByID(caregiver.UserID)
 	if err != nil {
 		return fmt.Errorf("failed to get user info for caregiver: %w", err)
@@ -121,9 +121,11 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 </html>
 `, elder.Name, alert.Datetime.Format("02/01 15:04"), alert.ElderLat, alert.ElderLong)
 	
-	if err := s.emailService.SendMessage(user.Email, subject, message); err != nil {
-		return fmt.Errorf("failed to send email notification: %w", err)
-	}
+	go func() {
+		if err := s.emailService.SendMessage(user.Email, subject, message); err != nil {
+			log.Printf("Failed to send emergency alert email: %v", err)
+		}
+	}()
 	
 	return nil
 }
