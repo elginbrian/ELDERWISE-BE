@@ -15,6 +15,17 @@ func NewCaregiverController(service services.CaregiverService) *CaregiverControl
 	return &CaregiverController{service}
 }
 
+// GetCaregiverByID godoc
+// @Summary Get caregiver by ID
+// @Description Get a caregiver's details by their ID
+// @Tags caregivers
+// @Accept json
+// @Produce json
+// @Param caregiver_id path string true "Caregiver ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.CaregiverResponseDTO} "Caregiver retrieved successfully"
+// @Failure 404 {object} res.ResponseWrapper "Caregiver not found"
+// @Router /caregivers/{caregiver_id} [get]
+// @Security Bearer
 func (ctr *CaregiverController) GetCaregiverByID(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
 	caregiver, err := ctr.service.GetCaregiverByID(caregiverID)
@@ -33,6 +44,18 @@ func (ctr *CaregiverController) GetCaregiverByID(c *fiber.Ctx) error {
 	})
 }
 
+// CreateCaregiver godoc
+// @Summary Create a new caregiver
+// @Description Create a new caregiver with the provided information
+// @Tags caregivers
+// @Accept json
+// @Produce json
+// @Param caregiver body models.Caregiver true "Caregiver information"
+// @Success 201 {object} res.ResponseWrapper{data=res.CaregiverResponseDTO} "Caregiver created successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to create caregiver"
+// @Router /caregivers [post]
+// @Security Bearer
 func (ctr *CaregiverController) CreateCaregiver(c *fiber.Ctx) error {
 	var caregiver models.Caregiver
 	if err := c.BodyParser(&caregiver); err != nil {
@@ -58,6 +81,19 @@ func (ctr *CaregiverController) CreateCaregiver(c *fiber.Ctx) error {
 	})
 }
 
+// UpdateCaregiver godoc
+// @Summary Update a caregiver
+// @Description Update a caregiver with the provided information
+// @Tags caregivers
+// @Accept json
+// @Produce json
+// @Param caregiver_id path string true "Caregiver ID"
+// @Param caregiver body models.Caregiver true "Caregiver information"
+// @Success 200 {object} res.ResponseWrapper{data=res.CaregiverResponseDTO} "Caregiver updated successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 404 {object} res.ResponseWrapper "Failed to update caregiver"
+// @Router /caregivers/{caregiver_id} [put]
+// @Security Bearer
 func (ctr *CaregiverController) UpdateCaregiver(c *fiber.Ctx) error {
 	caregiverID := c.Params("caregiver_id")
 	var caregiver models.Caregiver

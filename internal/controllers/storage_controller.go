@@ -21,6 +21,18 @@ func NewStorageController(service services.StorageService, supabaseConfig *confi
 	}
 }
 
+// ProcessEntityImage godoc
+// @Summary Process an entity image
+// @Description Process an uploaded image and associate it with an entity
+// @Tags storage
+// @Accept json
+// @Produce json
+// @Param upload body models.StorageUpload true "Upload information"
+// @Success 201 {object} res.ResponseWrapper "Image processed successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to process image"
+// @Router /storage/images [post]
+// @Security Bearer
 func (c *StorageController) ProcessEntityImage(ctx *fiber.Ctx) error {
 	var upload models.StorageUpload
 	if err := ctx.BodyParser(&upload); err != nil {
