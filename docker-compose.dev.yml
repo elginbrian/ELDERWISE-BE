@@ -30,9 +30,9 @@ services:
       - SUPABASE_URL=https://ucayizjdmgxgwweshzag.supabase.co
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
-      - TWILIO_ACCOUNT_SID=ACd0b82f570065698d03ff1ea74b24db64
-      - TWILIO_AUTH_TOKEN=5b9160cdc96c72be28d862deb0bdb222
-      - TWILIO_PHONE_FROM=+15077044325
+      - EMAIL_USERNAME=elginbrian94@gmail.com
+      - EMAIL_PASSWORD="kdlk lyer xgrc axwg"
+      - EMAIL_FROM_NAME=Elderwise Alert System
     ports:
       - "4000:3000"
     depends_on:

@@ -22,10 +22,10 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 
 	// Configs
 	supabaseConfig := config.NewSupabaseConfig()
-	smsConfig := config.NewSMSConfig()
+	emailConfig := config.NewEmailConfig()
 	
 	// Services
-	smsService := services.NewSMSService(smsConfig)
+	emailService := services.NewEmailService(emailConfig)
 	authService := services.NewAuthService(authRepo)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
 	elderService := services.NewElderService(elderRepo)
@@ -35,7 +35,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		emergencyAlertRepo, 
 		elderRepo, 
 		caregiverRepo, 
-		smsService,
+		emailService,
 	)
 
 	// Controllers
@@ -46,7 +46,8 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	storageController := controllers.NewStorageController(storageService, supabaseConfig)
 	emergencyAlertController := controllers.NewEmergencyAlertController(
 		emergencyAlertService, 
-		smsService, 
+		emailService,
+		authService, 
 	)
 	
 	routeSetup := routes.NewRouteSetup(

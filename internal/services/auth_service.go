@@ -16,6 +16,7 @@ var jwtSecret = []byte("your-secret-key")
 type AuthService interface {
 	Register(user *models.User) (*models.User, error)
 	Login(email, password string) (string, error)
+	GetUserByID(userID string) (*models.User, error)
 }
 
 type authService struct {
@@ -67,4 +68,8 @@ func (s *authService) Login(email, password string) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func (s *authService) GetUserByID(userID string) (*models.User, error) {
+	return s.repo.GetUserByID(userID)
 }
