@@ -4,14 +4,17 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"net"
 	"net/smtp"
 	"strings"
+	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
 )
 
 type EmailService interface {
 	SendMessage(to, subject, message string) error
+	SendMessageAsync(to, subject, message string)
 }
 
 type emailService struct {
@@ -22,6 +25,14 @@ func NewEmailService(config *config.EmailConfig) EmailService {
 	return &emailService{
 		config: config,
 	}
+}
+
+func (s *emailService) SendMessageAsync(to, subject, message string) {
+	go func() {
+		if err := s.SendMessage(to, subject, message); err != nil {
+			log.Printf("Error sending email asynchronously: %v", err)
+		}
+	}()
 }
 
 func (s *emailService) SendMessage(to, subject, message string) error {
@@ -48,32 +59,38 @@ func (s *emailService) SendMessage(to, subject, message string) error {
 	
 	log.Printf("Sending email to %s with subject: %s", to, subject)
 	
-	// Gmail requires TLS
-	smtpServer := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
-	
-	// Set up TLS config
-	tlsConfig := &tls.Config{
-		ServerName: s.config.Host,
+	dialer := &net.Dialer{
+		Timeout: 10 * time.Second,
 	}
 	
-	// Connect to SMTP server
-	client, err := smtp.Dial(smtpServer)
+	conn, err := dialer.Dial("tcp", fmt.Sprintf("%s:%s", s.config.Host, s.config.Port))
 	if err != nil {
 		return fmt.Errorf("failed to connect to SMTP server: %w", err)
 	}
+	
+	client, err := smtp.NewClient(conn, s.config.Host)
+	if err != nil {
+		return fmt.Errorf("failed to create SMTP client: %w", err)
+	}
 	defer client.Close()
 	
-	// Start TLS
-	if err = client.StartTLS(tlsConfig); err != nil {
-		return fmt.Errorf("failed to start TLS: %w", err)
+	if tc, ok := client.TLSConnectionState(); !ok {
+		tlsConfig := &tls.Config{
+			ServerName: s.config.Host,
+			MinVersion: tls.VersionTLS12,
+		}
+		
+		if err = client.StartTLS(tlsConfig); err != nil {
+			return fmt.Errorf("failed to start TLS: %w", err)
+		}
+	} else {
+		log.Printf("Already using TLS version %x", tc.Version)
 	}
 	
-	// Authenticate
 	if err = client.Auth(auth); err != nil {
-		return fmt.Errorf("failed to authenticate: %w", err)
+		return fmt.Errorf("authentication failed: %w", err)
 	}
 	
-	// Set the sender and recipient
 	if err = client.Mail(s.config.FromEmail); err != nil {
 		return fmt.Errorf("failed to set sender: %w", err)
 	}
@@ -82,7 +99,6 @@ func (s *emailService) SendMessage(to, subject, message string) error {
 		return fmt.Errorf("failed to set recipient: %w", err)
 	}
 	
-	// Send the email body
 	wc, err := client.Data()
 	if err != nil {
 		return fmt.Errorf("failed to get data writer: %w", err)
@@ -90,17 +106,15 @@ func (s *emailService) SendMessage(to, subject, message string) error {
 	
 	_, err = wc.Write([]byte(msg.String()))
 	if err != nil {
+		wc.Close()
 		return fmt.Errorf("failed to write email body: %w", err)
 	}
 	
-	err = wc.Close()
-	if err != nil {
+	if err = wc.Close(); err != nil {
 		return fmt.Errorf("failed to close data writer: %w", err)
 	}
 	
-	// Send the QUIT command and close the connection
-	err = client.Quit()
-	if err != nil {
+	if err = client.Quit(); err != nil {
 		return fmt.Errorf("failed to quit connection: %w", err)
 	}
 	

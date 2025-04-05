@@ -100,7 +100,7 @@ func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	if userID != "" {
 		
 		user, err := c.authService.GetUserByID(userID)
-		if err == nil && user.Email != "" {
+		if (err == nil && user.Email != "") {
 			email = user.Email
 		}
 	} else if emailParam := ctx.Query("email"); emailParam != "" {
@@ -138,20 +138,11 @@ func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 </html>
 `, mockTime.Format("02/01 15:04"), mockLat, mockLong)
 	
-	if err := c.emailService.SendMessage(email, subject, message); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
-			Success: false,
-			Message: "Failed to send test email notification",
-			Error:   err.Error(),
-			Data: map[string]interface{}{
-				"recipient": email,
-			},
-		})
-	}
+	c.emailService.SendMessageAsync(email, subject, message)
 	
 	return ctx.Status(fiber.StatusOK).JSON(res.ResponseWrapper{
 		Success: true,
-		Message: "Test emergency alert email sent to " + email,
+		Message: "Test emergency alert email is being sent to " + email,
 		Data: map[string]interface{}{
 			"recipient": email,
 			"sent_at": mockTime,
