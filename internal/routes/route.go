@@ -3,13 +3,16 @@ package routes
 import (
 	"github.com/elginbrian/ELDERWISE-BE/internal/controllers"
 	"github.com/gofiber/fiber/v2"
+	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 type RouteSetup struct {
-	AuthController *controllers.AuthController
-	CaregiverController *controllers.CaregiverController
-	ElderController *controllers.ElderController
-	AreaController *controllers.AreaController
+	AuthController           *controllers.AuthController
+	CaregiverController      *controllers.CaregiverController
+	ElderController          *controllers.ElderController
+	AreaController           *controllers.AreaController
+	StorageController        *controllers.StorageController
+	EmergencyAlertController *controllers.EmergencyAlertController
 }
 
 func NewRouteSetup(
@@ -17,16 +20,22 @@ func NewRouteSetup(
 	caregiverController *controllers.CaregiverController,
 	elderController *controllers.ElderController,
 	areaController *controllers.AreaController,
+	storageController *controllers.StorageController,
+	emergencyAlertController *controllers.EmergencyAlertController,
 	) *RouteSetup {
 	return &RouteSetup{
-		AuthController: authController,
-		CaregiverController: caregiverController,
-		ElderController: elderController,
-		AreaController: areaController,
+		AuthController:           authController,
+		CaregiverController:      caregiverController,
+		ElderController:          elderController,
+		AreaController:           areaController,
+		StorageController:        storageController,
+		EmergencyAlertController: emergencyAlertController,
 	}
 }
 
 func (rs *RouteSetup) Setup(app *fiber.App) {
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	
 	api := app.Group("/api/v1")
 
 	api.Get("/", dummyHandler)
@@ -64,11 +73,15 @@ func (rs *RouteSetup) Setup(app *fiber.App) {
 	api.Put("/agendas/:agenda_id", controllers.UpdateAgenda)
 	api.Delete("/agendas/:agenda_id", controllers.DeleteAgenda)
 
-	api.Get("/emergency-alerts/:emergency_alert_id", dummyHandler)
-	api.Post("/emergency-alerts", dummyHandler)
-	api.Put("/emergency-alerts/:emergency_alert_id", dummyHandler)
+	api.Get("/emergency-alerts/:emergency_alert_id", rs.EmergencyAlertController.GetEmergencyAlertByID)
+	api.Post("/emergency-alerts", rs.EmergencyAlertController.CreateEmergencyAlert)
+	api.Put("/emergency-alerts/:emergency_alert_id", rs.EmergencyAlertController.UpdateEmergencyAlert)
+	
+	api.Post("/storage/images", rs.StorageController.ProcessEntityImage) 
+	
+	api.Get("/mock/emergency-alert", rs.EmergencyAlertController.MockEmergencyAlert)
 }
 
 func dummyHandler(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{"message": "This is a dummy response"})
+	return c.JSON(fiber.Map{"message": "Welcome to Elderwise by Masukin Andre ke Raion"})
 }

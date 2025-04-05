@@ -18,6 +18,16 @@ func NewAuthController(authService services.AuthService) *AuthController {
 	}
 }
 
+// RegisterHandler godoc
+// @Summary Register a new user
+// @Description Register a new user with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param registerRequest body req.RegisterRequestDTO true "Register credentials"
+// @Success 201 {object} res.ResponseWrapper{data=res.RegisterResponseDTO} "Registration successful"
+// @Failure 400 {object} res.ResponseWrapper "Bad request"
+// @Router /auth/register [post]
 func (ac *AuthController) RegisterHandler(c *fiber.Ctx) error {
 	var reqDTO req.RegisterRequestDTO
 	if err := c.BodyParser(&reqDTO); err != nil {
@@ -55,6 +65,17 @@ func (ac *AuthController) RegisterHandler(c *fiber.Ctx) error {
 	})
 }
 
+// LoginHandler godoc
+// @Summary Login user
+// @Description Login with email and password to get a JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param loginRequest body req.LoginRequestDTO true "Login credentials"
+// @Success 200 {object} res.ResponseWrapper{data=res.LoginResponseDTO} "Login successful"
+// @Failure 400 {object} res.ResponseWrapper "Bad request"
+// @Failure 401 {object} res.ResponseWrapper "Unauthorized"
+// @Router /auth/login [post]
 func (ac *AuthController) LoginHandler(c *fiber.Ctx) error {
 	var reqDTO req.LoginRequestDTO
 	if err := c.BodyParser(&reqDTO); err != nil {

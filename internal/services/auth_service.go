@@ -7,6 +7,7 @@ import (
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"github.com/elginbrian/ELDERWISE-BE/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,6 +16,7 @@ var jwtSecret = []byte("your-secret-key")
 type AuthService interface {
 	Register(user *models.User) (*models.User, error)
 	Login(email, password string) (string, error)
+	GetUserByID(userID string) (*models.User, error)
 }
 
 type authService struct {
@@ -30,6 +32,8 @@ func (s *authService) Register(user *models.User) (*models.User, error) {
 		return nil, errors.New("email already exists")
 	}
 
+	user.UserID = uuid.New().String()
+	
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
@@ -64,4 +68,8 @@ func (s *authService) Login(email, password string) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func (s *authService) GetUserByID(userID string) (*models.User, error) {
+	return s.repo.GetUserByID(userID)
 }

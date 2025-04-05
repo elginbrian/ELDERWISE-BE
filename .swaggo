@@ -1,0 +1,13 @@
+swagger:
+  outputTypes:
+    - go
+    - json
+    - yaml
+  parseDepth: 100
+  parseDependency: true
+  parseInternal: true
+  parseVendor: false
+  markdownFiles:
+    - README.md
+  generatedTime: true
+  audit: false

@@ -14,6 +14,8 @@ services:
     volumes:
       - postgres_data_prod:/var/lib/postgresql/data
     restart: always
+    networks:
+      - elderwise_network
 
   app:
     image: elginbrian/elderwise:latest
@@ -26,11 +28,33 @@ services:
       - POSTGRES_DB=elderwise_prod
       - POSTGRES_TIMEZONE=Asia/Jakarta
       - ENV=production
+      - SUPABASE_URL=https://ucayizjdmgxgwweshzag.supabase.co
+      - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
+      - SUPABASE_BUCKETNAME=elderwise-images
+      - EMAIL_USERNAME=elginbrian94@gmail.com
+      - EMAIL_PASSWORD=kdlklyerxgrcaxwg
+      - EMAIL_FROM_NAME=Elderwise Alert System
+      - EMAIL_PORT=465
+      - NETWORK_TEST_ON_STARTUP=true
     ports:
       - "4001:3000"
     depends_on:
       - postgres
     restart: always
+    networks:
+      - elderwise_network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ./logs:/app/logs
+
+networks:
+  elderwise_network:
+    driver: bridge
 
 volumes:
   postgres_data_prod:
