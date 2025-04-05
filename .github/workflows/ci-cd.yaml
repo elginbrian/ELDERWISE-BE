@@ -119,6 +119,25 @@ jobs:
                 exit 1
               fi
               docker-compose -f docker-compose.dev.yml down -v
+              
+              echo "Resetting development database..."
+             
+              DB_CONTAINER="elderwise_postgres_dev"
+              DB_NAME="elderwise_dev"
+              DB_USER="postgres"
+              DB_PASSWORD="postgres"
+              
+              docker-compose -f docker-compose.dev.yml up -d postgres
+              
+              echo "Waiting for postgres to start..."
+              sleep 10
+              
+              echo "PostgreSQL detected, resetting database..."
+              docker-compose -f docker-compose.dev.yml exec -T postgres psql -U "$DB_USER" -c "DROP DATABASE IF EXISTS $DB_NAME;"
+              docker-compose -f docker-compose.dev.yml exec -T postgres psql -U "$DB_USER" -c "CREATE DATABASE $DB_NAME;"
+              
+              docker-compose -f docker-compose.dev.yml down
+              
               docker-compose -f docker-compose.dev.yml build
               docker-compose -f docker-compose.dev.yml up -d
             fi

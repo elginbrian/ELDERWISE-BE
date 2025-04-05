@@ -22,6 +22,17 @@ func NewEmergencyAlertController(service services.EmergencyAlertService, smsServ
 	}
 }
 
+// GetEmergencyAlertByID godoc
+// @Summary Get emergency alert by ID
+// @Description Get an emergency alert's details by its ID
+// @Tags emergency-alerts
+// @Accept json
+// @Produce json
+// @Param emergency_alert_id path string true "Emergency Alert ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.EmergencyAlertResponseDTO} "Emergency alert retrieved successfully"
+// @Failure 404 {object} res.ResponseWrapper "Emergency alert not found"
+// @Router /emergency-alerts/{emergency_alert_id} [get]
+// @Security Bearer
 func (c *EmergencyAlertController) GetEmergencyAlertByID(ctx *fiber.Ctx) error {
 	alertID := ctx.Params("emergency_alert_id")
 	alert, err := c.service.GetEmergencyAlertByID(alertID)
@@ -40,6 +51,18 @@ func (c *EmergencyAlertController) GetEmergencyAlertByID(ctx *fiber.Ctx) error {
 	})
 }
 
+// CreateEmergencyAlert godoc
+// @Summary Create a new emergency alert
+// @Description Create a new emergency alert and send notifications
+// @Tags emergency-alerts
+// @Accept json
+// @Produce json
+// @Param alert body models.EmergencyAlert true "Emergency alert information"
+// @Success 201 {object} res.ResponseWrapper{data=res.EmergencyAlertResponseDTO} "Emergency alert created successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to create emergency alert"
+// @Router /emergency-alerts [post]
+// @Security Bearer
 func (c *EmergencyAlertController) CreateEmergencyAlert(ctx *fiber.Ctx) error {
 	var alert models.EmergencyAlert
 	if err := ctx.BodyParser(&alert); err != nil {
@@ -65,6 +88,19 @@ func (c *EmergencyAlertController) CreateEmergencyAlert(ctx *fiber.Ctx) error {
 	})
 }
 
+// UpdateEmergencyAlert godoc
+// @Summary Update an emergency alert
+// @Description Update an emergency alert status (e.g., dismissing it)
+// @Tags emergency-alerts
+// @Accept json
+// @Produce json
+// @Param emergency_alert_id path string true "Emergency Alert ID"
+// @Param alert body models.EmergencyAlert true "Emergency alert information"
+// @Success 200 {object} res.ResponseWrapper{data=res.EmergencyAlertResponseDTO} "Emergency alert updated successfully"
+// @Failure 400 {object} res.ResponseWrapper "Invalid request payload"
+// @Failure 500 {object} res.ResponseWrapper "Failed to update emergency alert"
+// @Router /emergency-alerts/{emergency_alert_id} [put]
+// @Security Bearer
 func (c *EmergencyAlertController) UpdateEmergencyAlert(ctx *fiber.Ctx) error {
 	alertID := ctx.Params("emergency_alert_id")
 	var alert models.EmergencyAlert
@@ -91,6 +127,16 @@ func (c *EmergencyAlertController) UpdateEmergencyAlert(ctx *fiber.Ctx) error {
 	})
 }
 
+// MockEmergencyAlert godoc
+// @Summary Send a test emergency alert SMS
+// @Description Send a test SMS to the specified phone number
+// @Tags emergency-alerts
+// @Accept json
+// @Produce json
+// @Param phone query string false "Phone number to send the test SMS to"
+// @Success 200 {object} res.ResponseWrapper "Test emergency alert SMS sent"
+// @Failure 500 {object} res.ResponseWrapper "Failed to send test SMS notification"
+// @Router /mock/emergency-alert [get]
 func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	phoneNumber := "+6285749806571"
 	
