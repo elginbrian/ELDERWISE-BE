@@ -1,4 +1,4 @@
-FROM golang:1.23.4 as builder
+FROM golang:1.22-alpine as builder
 
 WORKDIR /app
 
@@ -9,20 +9,21 @@ COPY . .
 
 ENV CGO_ENABLED=0
 RUN go build -o elderwise cmd/main.go && \
+    go build -o network_check scripts/network_check.go && \
     chmod +x scripts/entrypoint.sh
 
 FROM alpine:latest
 
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates tzdata wget
 
 WORKDIR /app
-VOLUME ["/app"]
+VOLUME ["/app/logs"]
 
 COPY --from=builder /app/elderwise .
+COPY --from=builder /app/network_check .
 COPY --from=builder /app/scripts/entrypoint.sh .
-COPY --from=builder /app/scripts/network_check.go ./scripts/
 
-RUN chmod +x /app/entrypoint.sh /app/elderwise
+RUN chmod +x /app/entrypoint.sh /app/elderwise /app/network_check
 
 EXPOSE 3000
 

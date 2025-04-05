@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/smtp"
+	"os"
 	"strings"
 	"time"
 
@@ -29,7 +30,6 @@ func NewEmailService(config *config.EmailConfig) EmailService {
 
 func (s *emailService) SendMessageAsync(to, subject, message string) {
 	go func() {
-		// Try multiple times with increasing delays
 		maxRetries := 3
 		var lastErr error
 		
@@ -37,7 +37,6 @@ func (s *emailService) SendMessageAsync(to, subject, message string) {
 			if err := s.SendMessage(to, subject, message); err != nil {
 				log.Printf("ERROR: Email attempt %d failed: %v", i+1, err)
 				lastErr = err
-				// Exponential backoff
 				time.Sleep(time.Duration(2*i+1) * time.Second)
 				continue
 			}
@@ -49,10 +48,22 @@ func (s *emailService) SendMessageAsync(to, subject, message string) {
 		log.Printf("ERROR: All %d attempts to send email failed. Last error: %v", maxRetries, lastErr)
 		
 		if lastErr != nil {
-			if altErr := s.sendViaSSL(to, subject, message); altErr != nil {
-				log.Printf("ERROR: Alternative email method also failed: %v", altErr)
+			log.Printf("Trying alternative sending method as fallback...")
+			if s.config.Port == "465" {
+				if err := s.sendViaTLS(to, subject, message); err != nil {
+					log.Printf("ERROR: Alternative TLS method also failed: %v", err)
+					s.logFailedMessage(to, subject, message) 
+				} else {
+					log.Printf("SUCCESS: Email sent via alternative TLS method to %s", to)
+				}
 			} else {
-				log.Printf("SUCCESS: Email sent via alternative method to %s", to)
+				
+				if altErr := s.sendViaSSL(to, subject, message); altErr != nil {
+					log.Printf("ERROR: Alternative SSL method also failed: %v", altErr)
+					s.logFailedMessage(to, subject, message) 
+				} else {
+					log.Printf("SUCCESS: Email sent via alternative SSL method to %s", to)
+				}
 			}
 		}
 	}()
@@ -220,15 +231,60 @@ func (s *emailService) sendViaSSL(to, subject, message string) error {
 	return nil
 }
 
-// Add a new helper method to determine if error is a network error
-func isNetworkError(err error) bool {
-	if err == nil {
-		return false
+func (s *emailService) sendViaTLS(to, subject, message string) error {
+	log.Printf("ATTEMPT: Sending email via TLS to %s", to)
+	
+	headers := make(map[string]string)
+	headers["From"] = fmt.Sprintf("%s <%s>", s.config.FromName, s.config.FromEmail)
+	headers["To"] = to
+	headers["Subject"] = subject
+	headers["MIME-Version"] = "1.0"
+	headers["Content-Type"] = "text/html; charset=\"utf-8\""
+	
+	var msg strings.Builder
+	for k, v := range headers {
+		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
+	}
+	msg.WriteString("\r\n")
+	msg.WriteString(message)
+	
+	err := smtp.SendMail(
+		fmt.Sprintf("%s:587", s.config.Host),  
+		smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host),
+		s.config.FromEmail,
+		[]string{to},
+		[]byte(msg.String()),
+	)
+	
+	if err != nil {
+		return fmt.Errorf("TLS fallback sending failed: %w", err)
 	}
 	
-	_, isNetErr := err.(net.Error)
-	return isNetErr || 
-		strings.Contains(err.Error(), "dial tcp") || 
-		strings.Contains(err.Error(), "connection") ||
-		strings.Contains(err.Error(), "timeout")
+	return nil
+}
+
+func (s *emailService) logFailedMessage(to, subject, message string) {
+	log.Printf("Logging failed email for later recovery attempt")
+	
+	if err := os.MkdirAll("logs/failed_emails", 0755); err != nil {
+		log.Printf("ERROR: Could not create failed_emails directory: %v", err)
+		return
+	}
+	
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("logs/failed_emails/email_%s_%s.html", timestamp, to)
+	
+	var content strings.Builder
+	content.WriteString(fmt.Sprintf("To: %s\n", to))
+	content.WriteString(fmt.Sprintf("Subject: %s\n", subject))
+	content.WriteString(fmt.Sprintf("From: %s <%s>\n", s.config.FromName, s.config.FromEmail))
+	content.WriteString(fmt.Sprintf("Date: %s\n\n", time.Now().Format(time.RFC1123Z)))
+	content.WriteString(message)
+	
+	if err := os.WriteFile(filename, []byte(content.String()), 0644); err != nil {
+		log.Printf("ERROR: Failed to write email to log file: %v", err)
+		return
+	}
+	
+	log.Printf("Email logged to %s for later recovery", filename)
 }
