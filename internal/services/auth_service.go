@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
@@ -17,6 +18,7 @@ type AuthService interface {
 	Register(user *models.User) (*models.User, error)
 	Login(email, password string) (string, error)
 	GetUserByID(userID string) (*models.User, error)
+	GetUserFromToken(tokenString string) (*models.User, error)
 }
 
 type authService struct {
@@ -72,4 +74,35 @@ func (s *authService) Login(email, password string) (string, error) {
 
 func (s *authService) GetUserByID(userID string) (*models.User, error) {
 	return s.repo.GetUserByID(userID)
+}
+
+func (s *authService) GetUserFromToken(tokenString string) (*models.User, error) {
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid token signing method")
+		}
+		return jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		return nil, errors.New("user ID not found in token")
+	}
+
+	return s.GetUserByID(userID)
 }

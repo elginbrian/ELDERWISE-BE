@@ -42,6 +42,7 @@ func (rs *RouteSetup) Setup(app *fiber.App) {
 
 	api.Post("/auth/register", rs.AuthController.RegisterHandler)
 	api.Post("/auth/login", rs.AuthController.LoginHandler)
+	api.Get("/auth/me", rs.AuthController.GetCurrentUser)
 
 	api.Get("/users/:user_id", controllers.GetUserByID)
 	api.Get("/users/:user_id/caregivers", controllers.GetUserCaregivers)
