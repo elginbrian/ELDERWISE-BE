@@ -17,6 +17,7 @@ type RouteSetup struct {
 	EmergencyAlertController *controllers.EmergencyAlertController
 	AgendaController         *controllers.AgendaController
 	LocationHistoryController *controllers.LocationHistoryController
+	AlertViewerController    *controllers.AlertViewerController
 }
 
 func NewRouteSetup(
@@ -29,6 +30,7 @@ func NewRouteSetup(
 	emergencyAlertController *controllers.EmergencyAlertController,
 	agendaController *controllers.AgendaController,
 	locationHistoryController *controllers.LocationHistoryController,
+	alertViewerController *controllers.AlertViewerController,
 	) *RouteSetup {
 	return &RouteSetup{
 		AuthController:           authController,
@@ -40,6 +42,7 @@ func NewRouteSetup(
 		EmergencyAlertController: emergencyAlertController,
 		AgendaController:         agendaController,
 		LocationHistoryController: locationHistoryController,
+		AlertViewerController:    alertViewerController,
 	}
 }
 
@@ -99,6 +102,7 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 	protected.Post("/storage/images", rs.StorageController.ProcessEntityImage) 
 	
 	protected.Get("/mock/emergency-alert", rs.EmergencyAlertController.MockEmergencyAlert)
+	api.Get("/alerts-viewer", rs.AlertViewerController.ViewAlerts)
 }
 
 func dummyHandler(c *fiber.Ctx) error {

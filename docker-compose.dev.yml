@@ -16,13 +16,12 @@ services:
     networks:
       - elderwise_network
 
-  # Add a local SMTP server for development
   mailhog:
     image: mailhog/mailhog
     container_name: elderwise_mailhog_dev
     ports:
-      - "1025:1025" # SMTP server
-      - "8025:8025" # Web UI
+      - "1025:1025"
+      - "8025:8025"
     networks:
       - elderwise_network
     restart: always
@@ -33,7 +32,6 @@ services:
       dockerfile: dockerfile
     container_name: elderwise_backend_dev
     environment:
-      # Database settings
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
@@ -49,27 +47,12 @@ services:
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
 
-      # OPTION 1: Use MailHog for development (emails captured locally)
-      # - EMAIL_PROVIDER=smtp
-      # - EMAIL_HOST=mailhog
-      # - EMAIL_PORT=1025
-      # - EMAIL_SECURE=false
-      # - EMAIL_USERNAME=
-      # - EMAIL_PASSWORD=
-
-      # OPTION 2: Use Gmail (uncomment these to use real Gmail)
-      - EMAIL_PROVIDER=smtp
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=465
-      - EMAIL_SECURE=true
-      - EMAIL_USERNAME=elginbrian94@gmail.com
-      - EMAIL_PASSWORD=kdlklyerxgrcaxwg
+      - EMAIL_PROVIDER=sendgrid
+      - SENDGRID_API_KEY=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
+      - EMAIL_FROM=elginbrian49@student.ub.ac.id
+      - EMAIL_FROM_NAME=Elderwise Alert System
 
       # Common settings
-      - EMAIL_FROM=test@elderwise.local
-      - EMAIL_FROM_NAME=Elderwise Alert System (Dev)
-
-      # Email error settings
       - EMAIL_CONTINUE_ON_ERROR=true
       - EMAIL_MAX_RETRIES=3
       - EMAIL_HEALTH_CHECK_TIMEOUT=3

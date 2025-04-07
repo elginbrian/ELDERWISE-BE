@@ -98,6 +98,12 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	locationHistoryController := controllers.NewLocationHistoryController(locationHistoryService)
 	agendaController := controllers.NewAgendaController(agendaService)
 	
+	// Initialize the alert viewer controller
+	alertViewerController := controllers.NewAlertViewerController(
+		emergencyAlertRepo,
+		elderRepo,
+	)
+	
 	routeSetup := routes.NewRouteSetup(
 		authController,
 		userController,
@@ -107,7 +113,8 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		storageController,
 		emergencyAlertController,
 		agendaController,
-		locationHistoryController ,
+		locationHistoryController,
+		alertViewerController,
 	)
 
 	app := fiber.New()

@@ -47,23 +47,12 @@ services:
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
 
-      # - EMAIL_PROVIDER=smtp
-      # - EMAIL_HOST=mailhog
-      # - EMAIL_PORT=1025
-      # - EMAIL_SECURE=false
-      # - EMAIL_USERNAME=
-      # - EMAIL_PASSWORD=
-
-      - EMAIL_PROVIDER=smtp
-      - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=465
-      - EMAIL_USERNAME=elginbrian94@gmail.com
-      - EMAIL_PASSWORD=kdlklyerxgrcaxwg
-      - EMAIL_SECURE=true
+      - EMAIL_PROVIDER=sendgrid
+      - SENDGRID_API_KEY=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
+      - EMAIL_FROM=elginbrian49@student.ub.ac.id
+      - EMAIL_FROM_NAME=Elderwise Alert System
 
       # Common email settings
-      - EMAIL_FROM=alerts@elderwise.com
-      - EMAIL_FROM_NAME=Elderwise Alert System
       - EMAIL_CONTINUE_ON_ERROR=true
       - EMAIL_MAX_RETRIES=5
       - EMAIL_HEALTH_CHECK_TIMEOUT=3
