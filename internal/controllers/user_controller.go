@@ -1,24 +1,36 @@
 package controllers
 
 import (
-	"time"
-
-	"github.com/elginbrian/ELDERWISE-BE/internal/models"
+	"github.com/elginbrian/ELDERWISE-BE/internal/services"
 	res "github.com/elginbrian/ELDERWISE-BE/pkg/dto/response"
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetUserByID(c *fiber.Ctx) error {
+type UserController struct {
+	userService services.UserService
+}
+
+func NewUserController(userService services.UserService) *UserController {
+	return &UserController{userService: userService}
+}
+
+func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 
-	user := models.User{
-		UserID:    userID,
-		Email:     "dummy@example.com",
-		CreatedAt: time.Now(),
+	user, err := uc.userService.GetUserByID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "User not found",
+			Error:   err.Error(),
+		})
 	}
 
+	// Don't expose password
+	user.Password = ""
+
 	responseData := res.UserResponseDTO{
-		User: user,
+		User: *user,
 	}
 
 	return c.JSON(res.ResponseWrapper{
@@ -28,34 +40,16 @@ func GetUserByID(c *fiber.Ctx) error {
 	})
 }
 
-func GetUserCaregivers(c *fiber.Ctx) error {
+func (uc *UserController) GetUserCaregivers(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 
-	caregivers := []models.Caregiver{
-		{
-			CaregiverID:  "cg1",
-			UserID:       userID,
-			Name:         "Dummy Caregiver One",
-			Birthdate:    time.Now().AddDate(-30, 0, 0),
-			Gender:       "M",
-			PhoneNumber:  "081234567890",
-			ProfileURL:   "https://example.com/cg1",
-			Relationship: "Son",
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
-		},
-		{
-			CaregiverID:  "cg2",
-			UserID:       userID,
-			Name:         "Dummy Caregiver Two",
-			Birthdate:    time.Now().AddDate(-32, 0, 0),
-			Gender:       "F",
-			PhoneNumber:  "089876543210",
-			ProfileURL:   "https://example.com/cg2",
-			Relationship: "Daughter",
-			CreatedAt:    time.Now(),
-			UpdatedAt:    time.Now(),
-		},
+	caregivers, err := uc.userService.GetCaregiversByUserID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to retrieve caregivers",
+			Error:   err.Error(),
+		})
 	}
 
 	responseData := res.CaregiversResponseDTO{
@@ -69,34 +63,16 @@ func GetUserCaregivers(c *fiber.Ctx) error {
 	})
 }
 
-func GetUserElders(c *fiber.Ctx) error {
+func (uc *UserController) GetUserElders(c *fiber.Ctx) error {
 	userID := c.Params("user_id")
 
-	elders := []models.Elder{
-		{
-			ElderID:    "elder1",
-			UserID:     userID,
-			Name:       "Dummy Elder One",
-			Birthdate:  time.Now().AddDate(-70, 0, 0),
-			Gender:     "F",
-			BodyHeight: 150.5,
-			BodyWeight: 55.0,
-			PhotoURL:   "https://example.com/elder1",
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-		},
-		{
-			ElderID:    "elder2",
-			UserID:     userID,
-			Name:       "Dummy Elder Two",
-			Birthdate:  time.Now().AddDate(-75, 0, 0),
-			Gender:     "M",
-			BodyHeight: 160.0,
-			BodyWeight: 60.0,
-			PhotoURL:   "https://example.com/elder2",
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-		},
+	elders, err := uc.userService.GetEldersByUserID(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to retrieve elders",
+			Error:   err.Error(),
+		})
 	}
 
 	responseData := res.EldersResponseDTO{

@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"os"
+
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/internal/controllers"
 	"github.com/elginbrian/ELDERWISE-BE/internal/repository"
@@ -11,22 +13,31 @@ import (
 )
 
 func AppBootstrap(db *gorm.DB) *fiber.App {
-	
 	// Repositories
 	authRepo := repository.NewAuthRepository(db)
+	userRepo := repository.NewUserRepository(db)
 	caregiverRepo := repository.NewCaregiverRepository(db)
 	elderRepo := repository.NewElderRepository(db)
 	areaRepo := repository.NewAreaRepository(db)
 	storageRepo := repository.NewStorageRepository(db)
 	emergencyAlertRepo := repository.NewEmergencyAlertRepository(db)
+	locationHistoryRepo := repository.NewLocationHistoryRepository(db)
+	agendaRepo := repository.NewAgendaRepository(db)
 
 	// Configs
 	supabaseConfig := config.NewSupabaseConfig()
 	emailConfig := config.NewEmailConfig()
 	
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "your-default-secret-key" 
+	}
+	
 	// Services
 	emailService := services.NewEmailService(emailConfig)
 	authService := services.NewAuthService(authRepo)
+	authService.SetJWTSecret(jwtSecret)
+	userService := services.NewUserService(userRepo)
 	caregiverService := services.NewCaregiverService(caregiverRepo)
 	elderService := services.NewElderService(elderRepo)
 	areaService := services.NewAreaService(areaRepo)
@@ -37,9 +48,12 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		caregiverRepo, 
 		emailService,
 	)
+	locationHistoryService := services.NewLocationHistoryService(locationHistoryRepo)
+	agendaService := services.NewAgendaService(agendaRepo)
 
 	// Controllers
 	authController := controllers.NewAuthController(authService)
+	userController := controllers.NewUserController(userService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
 	elderController := controllers.NewElderController(elderService)
 	areaController := controllers.NewAreaController(areaService)
@@ -49,18 +63,24 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		emailService,
 		authService, 
 	)
+	locationHistoryController := controllers.NewLocationHistoryController(locationHistoryService)
+	agendaController := controllers.NewAgendaController(agendaService)
 	
 	routeSetup := routes.NewRouteSetup(
-		authController, 
-		caregiverController, 
+		authController,
+		userController,
+		caregiverController,
 		elderController, 
 		areaController,
 		storageController,
 		emergencyAlertController,
+		agendaController,
+		locationHistoryController ,
 	)
 
 	app := fiber.New()
-	routeSetup.Setup(app)
+	
+	routeSetup.Setup(app, jwtSecret)
 
 	return app
 }

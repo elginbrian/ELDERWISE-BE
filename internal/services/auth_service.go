@@ -12,21 +12,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("your-secret-key") 
-
 type AuthService interface {
 	Register(user *models.User) (*models.User, error)
 	Login(email, password string) (string, error)
 	GetUserByID(userID string) (*models.User, error)
 	GetUserFromToken(tokenString string) (*models.User, error)
+	SetJWTSecret(secret string)
 }
 
 type authService struct {
-	repo repository.AuthRepository
+	repo      repository.AuthRepository
+	jwtSecret []byte
 }
 
 func NewAuthService(repo repository.AuthRepository) AuthService {
 	return &authService{repo: repo}
+}
+
+func (s *authService) SetJWTSecret(secret string) {
+	s.jwtSecret = []byte(secret)
 }
 
 func (s *authService) Register(user *models.User) (*models.User, error) {
@@ -65,7 +69,7 @@ func (s *authService) Login(email, password string) (string, error) {
 		"exp":     time.Now().Add(72 * time.Hour).Unix(),
 	})
 
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(s.jwtSecret)
 	if err != nil {
 		return "", err
 	}
@@ -83,7 +87,7 @@ func (s *authService) GetUserFromToken(tokenString string) (*models.User, error)
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("invalid token signing method")
 		}
-		return jwtSecret, nil
+		return s.jwtSecret, nil
 	})
 
 	if err != nil {
