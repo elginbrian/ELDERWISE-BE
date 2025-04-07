@@ -1,6 +1,7 @@
 package bootstrap
 
 import (
+	"log"
 	"os"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
@@ -24,7 +25,6 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	locationHistoryRepo := repository.NewLocationHistoryRepository(db)
 	agendaRepo := repository.NewAgendaRepository(db)
 
-	// Configs
 	supabaseConfig := config.NewSupabaseConfig()
 	emailConfig := config.NewEmailConfig()
 	
@@ -33,8 +33,33 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		jwtSecret = "your-default-secret-key" 
 	}
 	
-	// Services
-	emailService := services.NewEmailService(emailConfig)
+	if emailConfig.Provider == "mock" {
+		log.Println("ERROR: Mock email provider not allowed")
+		if emailConfig.Username != "" && emailConfig.Password != "" {
+			emailConfig.Provider = "smtp"
+			log.Println("Forced SMTP provider based on available credentials")
+		} else if emailConfig.SendGridAPIKey != "" {
+			emailConfig.Provider = "sendgrid"
+			log.Println("Forced SendGrid provider based on available credentials")
+		} else if emailConfig.MailgunAPIKey != "" && emailConfig.MailgunDomain != "" {
+			emailConfig.Provider = "mailgun"
+			log.Println("Forced Mailgun provider based on available credentials")
+		} else {
+			log.Println("ERROR: No valid email provider configuration found!")
+		}
+	}
+	
+	emailService, err := services.NewEmailService(emailConfig)
+	if err != nil {
+		log.Fatalf("FATAL: Email service initialization failed: %v", err)
+	}
+	
+	if !emailService.HealthCheck() {
+		log.Fatalf("FATAL: Email service health check failed. Emergency alerts cannot be sent!")
+	}
+	
+	log.Println("Email service initialized successfully and health check passed")
+	
 	authService := services.NewAuthService(authRepo)
 	authService.SetJWTSecret(jwtSecret)
 	userService := services.NewUserService(userRepo)

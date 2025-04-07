@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/docs"
@@ -75,6 +78,8 @@ func main() {
 		AllowCredentials: false, 
 	}))
 
+	checkServices()
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"
@@ -96,4 +101,46 @@ func setupLogging() (*os.File, error) {
 	}
 	
 	return logFile, nil
+}
+
+func checkServices() {
+	emailProvider := os.Getenv("EMAIL_PROVIDER")
+	
+	switch emailProvider {
+	case "smtp":
+		host := os.Getenv("EMAIL_HOST")
+		if host == "" {
+			host = "smtp.gmail.com"
+		}
+		port := os.Getenv("EMAIL_PORT")
+		if port == "" {
+			port = "465"
+		}
+		
+		addr := fmt.Sprintf("%s:%s", host, port)
+		conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+		if err != nil {
+			log.Fatalf("FATAL: Cannot connect to SMTP server %s: %v", addr, err)
+		}
+		conn.Close()
+		log.Printf("Successfully connected to SMTP server %s", addr)
+		
+	case "sendgrid":
+		if os.Getenv("SENDGRID_API_KEY") == "" {
+			log.Fatalf("FATAL: SendGrid API key not provided")
+		}
+		log.Println("SendGrid provider configured (API connectivity will be tested on first use)")
+		
+	case "mailgun":
+		if os.Getenv("MAILGUN_API_KEY") == "" || os.Getenv("MAILGUN_DOMAIN") == "" {
+			log.Fatalf("FATAL: Mailgun API key or domain not provided")
+		}
+		log.Println("Mailgun provider configured (API connectivity will be tested on first use)")
+		
+	case "mock":
+		log.Fatalf("FATAL: Mock email provider is not allowed")
+		
+	default:
+		log.Fatalf("FATAL: Unknown email provider: %s", emailProvider)
+	}
 }
