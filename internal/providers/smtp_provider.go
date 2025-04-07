@@ -24,11 +24,27 @@ func NewSMTPProvider(config *config.EmailConfig) *SMTPProvider {
 func (p *SMTPProvider) TestConnection() error {
 	addr := fmt.Sprintf("%s:%s", p.config.Host, p.config.Port)
 	
-	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
+	log.Printf("Testing SMTP connection to %s...", addr)
+	
+	// First try a simple TCP connection to see if the server is reachable
+	conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
 	if err != nil {
+		log.Printf("SMTP TCP connection failed: %v", err)
 		return fmt.Errorf("failed to connect to SMTP server: %w", err)
 	}
 	defer conn.Close()
+	
+	log.Printf("SMTP TCP connection successful, testing SMTP handshake...")
+	
+	// Now try an actual SMTP connection with an increased timeout
+	client, err := smtp.Dial(addr)
+	if err != nil {
+		log.Printf("SMTP handshake failed: %v", err)
+		return fmt.Errorf("failed to establish SMTP handshake: %w", err)
+	}
+	defer client.Close()
+	
+	log.Printf("SMTP handshake successful, connection verified")
 	
 	return nil
 }

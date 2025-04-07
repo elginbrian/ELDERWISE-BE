@@ -43,7 +43,7 @@ services:
 
       # SMTP provider settings
       - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=465
+      - EMAIL_PORT=587 # Try port 587 instead of 465
       - EMAIL_USERNAME=elginbrian94@gmail.com
       - EMAIL_PASSWORD=kdlklyerxgrcaxwg
       - EMAIL_FROM_NAME=Elderwise Alert System
@@ -51,6 +51,9 @@ services:
 
       # Email retry settings
       - EMAIL_MAX_RETRIES=3
+
+      # Allow outbound network connections for email
+      - GODEBUG=netdns=go
 
       # Other settings
       - NETWORK_TEST_ON_STARTUP=true
@@ -70,6 +73,8 @@ services:
       start_period: 10s
     volumes:
       - ./logs:/app/logs
+    extra_hosts:
+      - "smtp.gmail.com:173.194.76.108"
 
 networks:
   elderwise_network:

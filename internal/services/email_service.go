@@ -59,6 +59,30 @@ func NewEmailService(config *config.EmailConfig) (EmailService, error) {
 	}, nil
 }
 
+// NewLoggingEmailService creates a minimal email service that only logs messages but doesn't send them
+func NewLoggingEmailService() EmailService {
+	return &loggingEmailService{}
+}
+
+// loggingEmailService implements EmailService but only logs messages without sending them
+type loggingEmailService struct{}
+
+func (s *loggingEmailService) SendMessage(to, subject, htmlBody string) error {
+	log.Printf("LOGGING ONLY (Email not sent): To=%s, Subject=%s, Length=%d", 
+		to, subject, len(htmlBody))
+	return nil
+}
+
+func (s *loggingEmailService) SendMessageAsync(to, subject, htmlBody string) {
+	go func() {
+		_ = s.SendMessage(to, subject, htmlBody)
+	}()
+}
+
+func (s *loggingEmailService) HealthCheck() bool {
+	return true // Always considered healthy since it just logs
+}
+
 // tryWithRetry attempts to send an email with retry mechanism
 func (s *emailService) tryWithRetry(provider providers.EmailProvider, to, subject, htmlBody string) error {
 	var lastErr error
