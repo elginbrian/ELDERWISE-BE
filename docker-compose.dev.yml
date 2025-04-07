@@ -16,6 +16,17 @@ services:
     networks:
       - elderwise_network
 
+  # Add a local SMTP server for development
+  mailhog:
+    image: mailhog/mailhog
+    container_name: elderwise_mailhog_dev
+    ports:
+      - "1025:1025" # SMTP server
+      - "8025:8025" # Web UI
+    networks:
+      - elderwise_network
+    restart: always
+
   app:
     build:
       context: .
@@ -38,22 +49,30 @@ services:
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
 
-      # Email settings - REAL PROVIDERS ONLY
-      - EMAIL_PROVIDER=smtp
+      # OPTION 1: Use MailHog for development (emails captured locally)
+      # - EMAIL_PROVIDER=smtp
+      # - EMAIL_HOST=mailhog
+      # - EMAIL_PORT=1025
+      # - EMAIL_SECURE=false
+      # - EMAIL_USERNAME=
+      # - EMAIL_PASSWORD=
 
-      # SMTP provider settings
+      # OPTION 2: Use Gmail (uncomment these to use real Gmail)
+      - EMAIL_PROVIDER=smtp
       - EMAIL_HOST=smtp.gmail.com
-      - EMAIL_PORT=587 # Try port 587 instead of 465
+      - EMAIL_PORT=465
+      - EMAIL_SECURE=true
       - EMAIL_USERNAME=elginbrian94@gmail.com
       - EMAIL_PASSWORD=kdlklyerxgrcaxwg
-      - EMAIL_FROM_NAME=Elderwise Alert System
-      - EMAIL_SECURE=true
 
-      # Email retry settings
+      # Common settings
+      - EMAIL_FROM=test@elderwise.local
+      - EMAIL_FROM_NAME=Elderwise Alert System (Dev)
+
+      # Email error settings
+      - EMAIL_CONTINUE_ON_ERROR=true
       - EMAIL_MAX_RETRIES=3
-
-      # Allow outbound network connections for email
-      - GODEBUG=netdns=go
+      - EMAIL_HEALTH_CHECK_TIMEOUT=3
 
       # Other settings
       - NETWORK_TEST_ON_STARTUP=true
@@ -62,6 +81,7 @@ services:
       - "4000:3000"
     depends_on:
       - postgres
+      - mailhog
     restart: always
     networks:
       - elderwise_network
@@ -73,8 +93,6 @@ services:
       start_period: 10s
     volumes:
       - ./logs:/app/logs
-    extra_hosts:
-      - "smtp.gmail.com:173.194.76.108"
 
 networks:
   elderwise_network:

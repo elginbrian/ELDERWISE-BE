@@ -26,31 +26,33 @@ func (p *SMTPProvider) TestConnection() error {
 	
 	log.Printf("Testing SMTP connection to %s...", addr)
 	
-	// First try a simple TCP connection to see if the server is reachable
-	conn, err := net.DialTimeout("tcp", addr, 10*time.Second)
+	timeout := p.config.HealthCheckTimeout
+	if timeout == 0 {
+		timeout = 5 * time.Second
+	}
+	
+	conn, err := net.DialTimeout("tcp", addr, timeout)
 	if err != nil {
-		log.Printf("SMTP TCP connection failed: %v", err)
+		if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+			log.Printf("SMTP connection timed out: this usually indicates network restrictions")
+			return fmt.Errorf("SMTP connection timeout (likely blocked by network/firewall): %w", err)
+		}
+		
+		log.Printf("SMTP connection failed: %v", err)
 		return fmt.Errorf("failed to connect to SMTP server: %w", err)
 	}
 	defer conn.Close()
 	
-	log.Printf("SMTP TCP connection successful, testing SMTP handshake...")
-	
-	// Now try an actual SMTP connection with an increased timeout
-	client, err := smtp.Dial(addr)
-	if err != nil {
-		log.Printf("SMTP handshake failed: %v", err)
-		return fmt.Errorf("failed to establish SMTP handshake: %w", err)
-	}
-	defer client.Close()
-	
-	log.Printf("SMTP handshake successful, connection verified")
-	
+	log.Printf("SMTP TCP connection successful")
 	return nil
 }
 
 func (p *SMTPProvider) SendEmail(to, subject, htmlBody string) error {
 	log.Printf("Sending email via SMTP to %s", to)
+	
+	if p.config.Host == "smtp.gmail.com" {
+		return p.sendGmailSimple(to, subject, htmlBody)
+	}
 	
 	addr := fmt.Sprintf("%s:%s", p.config.Host, p.config.Port)
 	
@@ -111,6 +113,50 @@ func (p *SMTPProvider) SendEmail(to, subject, htmlBody string) error {
 	
 	log.Printf("Email successfully sent via SMTP to %s", to)
 	return nil
+}
+
+// sendGmailSimple sends an email through Gmail using a simplified approach that works in more environments
+func (p *SMTPProvider) sendGmailSimple(to, subject, htmlBody string) error {
+	from := p.config.FromEmail
+	password := p.config.Password
+	
+	// Set up authentication information
+	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
+	
+	// Compose the message
+	msg := []byte("From: " + p.config.FromName + " <" + from + ">\r\n" +
+		"To: " + to + "\r\n" +
+		"Subject: " + subject + "\r\n" +
+		"MIME-Version: 1.0\r\n" +
+		"Content-Type: text/html; charset=utf-8\r\n" +
+		"\r\n" +
+		htmlBody + "\r\n")
+	
+	// Try sending with different port configurations
+	err1 := smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, msg)
+	if err1 == nil {
+		log.Printf("Email sent successfully via port 587")
+		return nil
+	}
+	
+	err2 := smtp.SendMail("smtp.gmail.com:465", auth, from, []string{to}, msg)
+	if err2 == nil {
+		log.Printf("Email sent successfully via port 465")
+		return nil
+	}
+	
+	err3 := smtp.SendMail("smtp.gmail.com:25", auth, from, []string{to}, msg)
+	if err3 == nil {
+		log.Printf("Email sent successfully via port 25")
+		return nil
+	}
+	
+	// Log all errors
+	log.Printf("Failed to send via 587: %v", err1)
+	log.Printf("Failed to send via 465: %v", err2)
+	log.Printf("Failed to send via 25: %v", err3)
+	
+	return fmt.Errorf("all SMTP sending attempts failed")
 }
 
 func (p *SMTPProvider) SendEmailAsync(to, subject, htmlBody string) {

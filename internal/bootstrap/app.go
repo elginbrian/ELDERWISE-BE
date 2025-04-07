@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/internal/controllers"
@@ -49,17 +50,21 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		}
 	}
 	
-	emailService, err := services.NewEmailService(emailConfig)
+	emailConfig.HealthCheckTimeout = 5 * time.Second
+
+	var emailService services.EmailService
+	realEmailService, err := services.NewEmailService(emailConfig)
 	if err != nil {
 		log.Printf("WARNING: Email service initialization failed: %v", err)
-		log.Println("Emergency alerts will NOT be delivered, but the application will continue running.")
-		
+		log.Println("Using logging-only email service instead.")
 		emailService = services.NewLoggingEmailService()
-	} else if !emailService.HealthCheck() {
+	} else if !realEmailService.HealthCheck() {
 		log.Printf("WARNING: Email service health check failed. Email alerts may not be delivered!")
-		log.Println("The application will continue running, but emergency alerts may not work correctly.")
+		log.Println("Using logging-only email service instead.")
+		emailService = services.NewLoggingEmailService()
 	} else {
 		log.Println("Email service initialized successfully and health check passed")
+		emailService = realEmailService
 	}
 	
 	authService := services.NewAuthService(authRepo)

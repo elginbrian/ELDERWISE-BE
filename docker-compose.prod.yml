@@ -17,6 +17,16 @@ services:
     networks:
       - elderwise_network
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: elderwise_mailhog_prod
+    ports:
+      - "1026:1025"
+      - "8026:8025"
+    networks:
+      - elderwise_network
+    restart: always
+
   app:
     image: elginbrian/elderwise:latest
     container_name: elderwise_backend_prod
@@ -37,29 +47,26 @@ services:
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
 
-      # Email settings - REAL PROVIDER ONLY
+      # - EMAIL_PROVIDER=smtp
+      # - EMAIL_HOST=mailhog
+      # - EMAIL_PORT=1025
+      # - EMAIL_SECURE=false
+      # - EMAIL_USERNAME=
+      # - EMAIL_PASSWORD=
+
       - EMAIL_PROVIDER=smtp
-
-      # Email retry settings
-      - EMAIL_MAX_RETRIES=5
-
-      # SMTP provider settings
       - EMAIL_HOST=smtp.gmail.com
       - EMAIL_PORT=465
       - EMAIL_USERNAME=elginbrian94@gmail.com
       - EMAIL_PASSWORD=kdlklyerxgrcaxwg
-      - EMAIL_FROM_NAME=Elderwise Alert System
       - EMAIL_SECURE=true
 
-      # Alternative providers
-      # For SendGrid:
-      # - EMAIL_PROVIDER=sendgrid
-      # - SENDGRID_API_KEY=your_sendgrid_api_key
-
-      # For Mailgun:
-      # - EMAIL_PROVIDER=mailgun
-      # - MAILGUN_API_KEY=your_mailgun_api_key
-      # - MAILGUN_DOMAIN=your_mailgun_domain
+      # Common email settings
+      - EMAIL_FROM=alerts@elderwise.com
+      - EMAIL_FROM_NAME=Elderwise Alert System
+      - EMAIL_CONTINUE_ON_ERROR=true
+      - EMAIL_MAX_RETRIES=5
+      - EMAIL_HEALTH_CHECK_TIMEOUT=3
 
       # Other settings
       - NETWORK_TEST_ON_STARTUP=true
@@ -68,6 +75,7 @@ services:
       - "4001:3000"
     depends_on:
       - postgres
+      - mailhog
     restart: always
     networks:
       - elderwise_network

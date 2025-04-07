@@ -55,7 +55,7 @@ func (p *MailgunProvider) SendEmail(to, subject, htmlBody string) error {
 	defer resp.Body.Close()
 	
 	if resp.StatusCode >= 400 {
-		return fmt.Errorf("Mailgun API returned error status: %d", resp.StatusCode)
+		return fmt.Errorf("mailgun API returned error status: %d", resp.StatusCode)
 	}
 	
 	return nil
