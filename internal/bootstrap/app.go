@@ -51,14 +51,16 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	
 	emailService, err := services.NewEmailService(emailConfig)
 	if err != nil {
-		log.Fatalf("FATAL: Email service initialization failed: %v", err)
+		log.Printf("WARNING: Email service initialization failed: %v", err)
+		log.Println("Emergency alerts will NOT be delivered, but the application will continue running.")
+		
+		emailService = services.NewLoggingEmailService()
+	} else if !emailService.HealthCheck() {
+		log.Printf("WARNING: Email service health check failed. Email alerts may not be delivered!")
+		log.Println("The application will continue running, but emergency alerts may not work correctly.")
+	} else {
+		log.Println("Email service initialized successfully and health check passed")
 	}
-	
-	if !emailService.HealthCheck() {
-		log.Fatalf("FATAL: Email service health check failed. Emergency alerts cannot be sent!")
-	}
-	
-	log.Println("Email service initialized successfully and health check passed")
 	
 	authService := services.NewAuthService(authRepo)
 	authService.SetJWTSecret(jwtSecret)
