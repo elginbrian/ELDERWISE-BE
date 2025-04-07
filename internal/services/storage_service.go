@@ -60,10 +60,54 @@ func (s *storageService) SaveFile(file *models.StorageFile) error {
 }
 
 func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error {
+	if upload.URL == "" {
+		return fmt.Errorf("image URL is required")
+	}
+	
+	if upload.Path == "" {
+		return fmt.Errorf("image path is required")
+	}
+	
+	if upload.EntityType == nil {
+		return fmt.Errorf("entity type is required")
+	}
+	
+	entityType := models.EntityType(*upload.EntityType)
+	isValid := false
+	
+	switch entityType {
+	case models.EntityTypeElder, models.EntityTypeCaregiver, 
+		 models.EntityTypeUser, models.EntityTypeAgenda, 
+		 models.EntityTypeArea, models.EntityTypeGeneral:
+		isValid = true
+	}
+	
+	if !isValid {
+		return fmt.Errorf("invalid entity type: %s", *upload.EntityType)
+	}
+	
+	if upload.EntityID == nil || *upload.EntityID == "" {
+		return fmt.Errorf("entity ID is required when entity type is provided")
+	}
+	
+	if entityType == models.EntityTypeElder {
+		if _, err := s.elderRepo.FindByID(*upload.EntityID); err != nil {
+			return fmt.Errorf("elder with ID %s not found", *upload.EntityID)
+		}
+	} else if entityType == models.EntityTypeCaregiver {
+		if _, err := s.caregiverRepo.FindByID(*upload.EntityID); err != nil {
+			return fmt.Errorf("caregiver with ID %s not found", *upload.EntityID)
+		}
+	}
+	
 	now := time.Now()
 	uploadedAt := now
 	if upload.CreatedAt != nil {
 		uploadedAt = *upload.CreatedAt
+	}
+	
+	if upload.ID == "" {
+		upload.ID = uuid.New().String()
 	}
 	
 	file := &models.StorageFile{
@@ -81,11 +125,6 @@ func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error 
 		return fmt.Errorf("failed to save file record: %w", err)
 	}
 	
-	if upload.EntityType == nil || upload.EntityID == nil {
-		return nil
-	}
-
-	entityType := models.EntityType(*upload.EntityType)
 	entityID := *upload.EntityID
 	
 	switch entityType {
