@@ -50,6 +50,34 @@ func (c *StorageController) ProcessEntityImage(ctx *fiber.Ctx) error {
 		})
 	}
 	
+	if upload.Path == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Image path is required",
+		})
+	}
+	
+	if upload.EntityType == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Entity type is required",
+		})
+	}
+	
+	if *upload.EntityType == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Entity type cannot be empty",
+		})
+	}
+	
+	if upload.EntityID == nil || *upload.EntityID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Entity ID is required when entity type is provided",
+		})
+	}
+	
 	if upload.ID == "" {
 		upload.ID = uuid.New().String()
 	}
