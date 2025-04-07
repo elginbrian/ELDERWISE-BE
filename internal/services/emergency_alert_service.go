@@ -121,11 +121,13 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 </html>
 `, elder.Name, alert.Datetime.Format("02/01 15:04"), alert.ElderLat, alert.ElderLong)
 	
-	go func() {
-		if err := s.emailService.SendMessage(user.Email, subject, message); err != nil {
-			log.Printf("Failed to send emergency alert email: %v", err)
-		}
-	}()
+	// Use synchronous sending to ensure alerts are actually sent
+	err = s.emailService.SendMessage(user.Email, subject, message)
+	if err != nil {
+		log.Printf("ERROR: Failed to send emergency alert email: %v", err)
+		return fmt.Errorf("failed to send alert notification: %w", err)
+	}
 	
+	log.Printf("Emergency alert successfully sent to %s for elder %s", user.Email, elder.Name)
 	return nil
 }

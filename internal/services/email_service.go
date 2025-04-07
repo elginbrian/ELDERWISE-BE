@@ -1,290 +1,135 @@
 package services
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net"
-	"net/smtp"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
+	"github.com/elginbrian/ELDERWISE-BE/internal/providers"
 )
 
 type EmailService interface {
-	SendMessage(to, subject, message string) error
-	SendMessageAsync(to, subject, message string)
+	SendMessage(to, subject, htmlBody string) error
+	SendMessageAsync(to, subject, htmlBody string)
+	HealthCheck() bool
 }
 
 type emailService struct {
-	config *config.EmailConfig
+	config          *config.EmailConfig
+	primaryProvider providers.EmailProvider
+	fallbackProvider providers.EmailProvider
 }
 
-func NewEmailService(config *config.EmailConfig) EmailService {
-	return &emailService{
-		config: config,
+func createProvider(providerType string, config *config.EmailConfig) (providers.EmailProvider, error) {
+	switch providerType {
+	case "sendgrid":
+		return providers.NewSendGridProvider(config), nil
+	case "mailgun":
+		return providers.NewMailgunProvider(config), nil
+	case "smtp":
+		return providers.NewSMTPProvider(config), nil
+	default:
+		return nil, fmt.Errorf("unknown or unsupported provider type: %s", providerType)
 	}
 }
 
-func (s *emailService) SendMessageAsync(to, subject, message string) {
-	go func() {
-		maxRetries := 3
-		var lastErr error
-		
-		for i := 0; i < maxRetries; i++ {
-			if err := s.SendMessage(to, subject, message); err != nil {
-				log.Printf("ERROR: Email attempt %d failed: %v", i+1, err)
-				lastErr = err
-				time.Sleep(time.Duration(2*i+1) * time.Second)
-				continue
-			}
-			
-			log.Printf("SUCCESS: Async email to %s successfully sent on attempt %d", to, i+1)
-			return
+func NewEmailService(config *config.EmailConfig) (EmailService, error) {
+	if err := config.ValidateConfig(); err != nil {
+		return nil, fmt.Errorf("email configuration error: %w", err)
+	}
+	
+	primaryProvider, err := createProvider(config.Provider, config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create email provider: %w", err)
+	}
+	
+	var fallbackProvider providers.EmailProvider
+	if config.FallbackProvider != "" && config.FallbackProvider != config.Provider {
+		fallbackProvider, err = createProvider(config.FallbackProvider, config)
+		if err != nil {
+			log.Printf("WARNING: Failed to create fallback email provider: %v", err)
+		}
+	}
+	
+	return &emailService{
+		config:           config,
+		primaryProvider:  primaryProvider,
+		fallbackProvider: fallbackProvider,
+	}, nil
+}
+
+// tryWithRetry attempts to send an email with retry mechanism
+func (s *emailService) tryWithRetry(provider providers.EmailProvider, to, subject, htmlBody string) error {
+	var lastErr error
+	
+	for attempt := 0; attempt <= s.config.MaxRetries; attempt++ {
+		if attempt > 0 {
+			// Wait before retry with exponential backoff
+			backoff := time.Duration(attempt*attempt) * 500 * time.Millisecond
+			time.Sleep(backoff)
+			log.Printf("Retrying email to %s (attempt %d/%d)", to, attempt, s.config.MaxRetries)
 		}
 		
-		log.Printf("ERROR: All %d attempts to send email failed. Last error: %v", maxRetries, lastErr)
-		
-		if lastErr != nil {
-			log.Printf("Trying alternative sending method as fallback...")
-			if s.config.Port == "465" {
-				if err := s.sendViaTLS(to, subject, message); err != nil {
-					log.Printf("ERROR: Alternative TLS method also failed: %v", err)
-					s.logFailedMessage(to, subject, message) 
-				} else {
-					log.Printf("SUCCESS: Email sent via alternative TLS method to %s", to)
-				}
-			} else {
-				
-				if altErr := s.sendViaSSL(to, subject, message); altErr != nil {
-					log.Printf("ERROR: Alternative SSL method also failed: %v", altErr)
-					s.logFailedMessage(to, subject, message) 
-				} else {
-					log.Printf("SUCCESS: Email sent via alternative SSL method to %s", to)
-				}
+		err := provider.SendEmail(to, subject, htmlBody)
+		if err == nil {
+			// Success
+			if attempt > 0 {
+				log.Printf("Email to %s succeeded after %d retries", to, attempt)
 			}
+			return nil
+		}
+		
+		lastErr = err
+		log.Printf("Email attempt failed: %v", err)
+	}
+	
+	return fmt.Errorf("all attempts failed: %w", lastErr)
+}
+
+// SendMessage sends an email, falling back if primary provider fails
+func (s *emailService) SendMessage(to, subject, htmlBody string) error {
+	// Try primary provider with retry
+	err := s.tryWithRetry(s.primaryProvider, to, subject, htmlBody)
+	if err == nil {
+		return nil
+	}
+	
+	// If primary fails and fallback exists, try fallback
+	if s.fallbackProvider != nil {
+		log.Printf("Primary email provider failed, trying fallback for email to %s", to)
+		err = s.tryWithRetry(s.fallbackProvider, to, subject, htmlBody)
+		if err == nil {
+			return nil
+		}
+		return fmt.Errorf("both primary and fallback email providers failed: %w", err)
+	}
+	
+	return fmt.Errorf("email delivery failed: %w", err)
+}
+
+// SendMessageAsync sends an email asynchronously
+func (s *emailService) SendMessageAsync(to, subject, htmlBody string) {
+	go func() {
+		if err := s.SendMessage(to, subject, htmlBody); err != nil {
+			log.Printf("Async email delivery failed: %v", err)
 		}
 	}()
 }
 
-func (s *emailService) SendMessage(to, subject, message string) error {
-	log.Printf("ATTEMPT: Sending email to %s with subject: %s", to, subject)
-	log.Printf("DEBUG: Using Gmail account: %s", s.config.Username)
-	
-	if s.config.Port == "465" {
-		return s.sendViaSSL(to, subject, message)
+// HealthCheck tests if the email service is functional
+func (s *emailService) HealthCheck() bool {
+	switch s.config.Provider {
+	case "smtp":
+		// For SMTP, we can test connection to the server
+		provider := s.primaryProvider.(*providers.SMTPProvider)
+		return provider.TestConnection() == nil
+		
+	case "sendgrid", "mailgun":
+		// For API-based providers, we consider them healthy if they're configured
+		return s.config.ValidateConfig() == nil
+		
+	default:
+		return false
 	}
-	
-	addr := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
-	
-	auth := smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)
-	
-	headers := make(map[string]string)
-	headers["From"] = fmt.Sprintf("%s <%s>", s.config.FromName, s.config.FromEmail)
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=\"utf-8\""
-	
-	var msg strings.Builder
-	for k, v := range headers {
-		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-	}
-	msg.WriteString("\r\n")
-	msg.WriteString(message)
-	
-	fullMessage := []byte(msg.String())
-	
-	log.Printf("DEBUG: Connecting to SMTP server at %s with 15s timeout", addr)
-	
-	dialer := &net.Dialer{
-		Timeout: 15 * time.Second,
-	}
-	
-	conn, err := dialer.Dial("tcp", addr)
-	if err != nil {
-		log.Printf("ERROR: Failed to connect to SMTP server: %v", err)
-		return fmt.Errorf("failed to connect to SMTP server: %w", err)
-	}
-	defer conn.Close()
-	
-	client, err := smtp.NewClient(conn, s.config.Host)
-	if err != nil {
-		return fmt.Errorf("failed to create SMTP client: %w", err)
-	}
-	defer client.Close()
-	
-	tlsConfig := &tls.Config{
-		ServerName: s.config.Host,
-		MinVersion: tls.VersionTLS12,
-	}
-	
-	if err = client.StartTLS(tlsConfig); err != nil {
-		return fmt.Errorf("failed to start TLS: %w", err)
-	}
-	
-	if err = client.Auth(auth); err != nil {
-		return fmt.Errorf("authentication failed: %w", err)
-	}
-	
-	if err = client.Mail(s.config.FromEmail); err != nil {
-		return fmt.Errorf("failed to set sender: %w", err)
-	}
-	
-	if err = client.Rcpt(to); err != nil {
-		return fmt.Errorf("failed to set recipient: %w", err)
-	}
-	
-	wc, err := client.Data()
-	if err != nil {
-		return fmt.Errorf("failed to get data writer: %w", err)
-	}
-	
-	_, err = wc.Write(fullMessage)
-	if err != nil {
-		wc.Close()
-		return fmt.Errorf("failed to write email body: %w", err)
-	}
-	
-	if err = wc.Close(); err != nil {
-		return fmt.Errorf("failed to close data writer: %w", err)
-	}
-	
-	if err = client.Quit(); err != nil {
-		return fmt.Errorf("failed to quit connection: %w", err)
-	}
-	
-	log.Printf("SUCCESS: Email sent to %s", to)
-	return nil
-}
-
-func (s *emailService) sendViaSSL(to, subject, message string) error {
-	log.Printf("ATTEMPT: Sending email via SSL to %s", to)
-	
-	headers := make(map[string]string)
-	headers["From"] = fmt.Sprintf("%s <%s>", s.config.FromName, s.config.FromEmail)
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=\"utf-8\""
-	
-	var msg strings.Builder
-	for k, v := range headers {
-		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-	}
-	msg.WriteString("\r\n")
-	msg.WriteString(message)
-	
-	servername := fmt.Sprintf("%s:%s", s.config.Host, s.config.Port)
-	
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: false,
-		ServerName:         s.config.Host,
-	}
-	
-	conn, err := tls.Dial("tcp", servername, tlsconfig)
-	if err != nil {
-		log.Printf("ERROR: Failed to connect via SSL: %v", err)
-		return err
-	}
-	defer conn.Close()
-	
-	client, err := smtp.NewClient(conn, s.config.Host)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-	
-	auth := smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host)
-	if err = client.Auth(auth); err != nil {
-		return err
-	}
-	
-	if err = client.Mail(s.config.FromEmail); err != nil {
-		return err
-	}
-	
-	if err = client.Rcpt(to); err != nil {
-		return err
-	}
-	
-	w, err := client.Data()
-	if err != nil {
-		return err
-	}
-	
-	_, err = w.Write([]byte(msg.String()))
-	if err != nil {
-		return err
-	}
-	
-	err = w.Close()
-	if err != nil {
-		return err
-	}
-	
-	client.Quit()
-	
-	log.Printf("SUCCESS: Email sent via SSL to %s", to)
-	return nil
-}
-
-func (s *emailService) sendViaTLS(to, subject, message string) error {
-	log.Printf("ATTEMPT: Sending email via TLS to %s", to)
-	
-	headers := make(map[string]string)
-	headers["From"] = fmt.Sprintf("%s <%s>", s.config.FromName, s.config.FromEmail)
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=\"utf-8\""
-	
-	var msg strings.Builder
-	for k, v := range headers {
-		msg.WriteString(fmt.Sprintf("%s: %s\r\n", k, v))
-	}
-	msg.WriteString("\r\n")
-	msg.WriteString(message)
-	
-	err := smtp.SendMail(
-		fmt.Sprintf("%s:587", s.config.Host),  
-		smtp.PlainAuth("", s.config.Username, s.config.Password, s.config.Host),
-		s.config.FromEmail,
-		[]string{to},
-		[]byte(msg.String()),
-	)
-	
-	if err != nil {
-		return fmt.Errorf("TLS fallback sending failed: %w", err)
-	}
-	
-	return nil
-}
-
-func (s *emailService) logFailedMessage(to, subject, message string) {
-	log.Printf("Logging failed email for later recovery attempt")
-	
-	if err := os.MkdirAll("logs/failed_emails", 0755); err != nil {
-		log.Printf("ERROR: Could not create failed_emails directory: %v", err)
-		return
-	}
-	
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("logs/failed_emails/email_%s_%s.html", timestamp, to)
-	
-	var content strings.Builder
-	content.WriteString(fmt.Sprintf("To: %s\n", to))
-	content.WriteString(fmt.Sprintf("Subject: %s\n", subject))
-	content.WriteString(fmt.Sprintf("From: %s <%s>\n", s.config.FromName, s.config.FromEmail))
-	content.WriteString(fmt.Sprintf("Date: %s\n\n", time.Now().Format(time.RFC1123Z)))
-	content.WriteString(message)
-	
-	if err := os.WriteFile(filename, []byte(content.String()), 0644); err != nil {
-		log.Printf("ERROR: Failed to write email to log file: %v", err)
-		return
-	}
-	
-	log.Printf("Email logged to %s for later recovery", filename)
 }
