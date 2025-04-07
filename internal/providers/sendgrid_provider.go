@@ -18,7 +18,7 @@ type SendGridProvider struct {
 func NewSendGridProvider(config *config.EmailConfig) *SendGridProvider {
 	return &SendGridProvider{
 		apiKey:    config.SendGridAPIKey,
-		fromEmail: config.FromEmail,
+		fromEmail: config.FromEmail,  // This can be your Gmail address
 		fromName:  config.FromName,
 	}
 }
