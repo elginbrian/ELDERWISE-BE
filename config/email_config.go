@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 )
 
 type EmailConfig struct {
@@ -25,7 +26,8 @@ type EmailConfig struct {
 	MailgunAPIKey  string
 	MailgunDomain  string
 	
-	MaxRetries int
+	MaxRetries       int
+	HealthCheckTimeout time.Duration 
 }
 
 func NewEmailConfig() *EmailConfig {
@@ -92,6 +94,7 @@ func NewEmailConfig() *EmailConfig {
 		MailgunDomain:    os.Getenv("MAILGUN_DOMAIN"),
 		
 		MaxRetries:       maxRetries,
+		HealthCheckTimeout: 5 * time.Second, // Default to 5 seconds
 	}
 	
 	log.Printf("Email configuration: Provider=%s, Fallback=%s, From=%s <%s>", 

@@ -13,7 +13,7 @@ import (
 	"github.com/elginbrian/ELDERWISE-BE/internal/bootstrap"
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	_ "github.com/swaggo/fiber-swagger" // swagger middleware
+	_ "github.com/swaggo/fiber-swagger"
 )
 
 // @title ELDERWISE API
@@ -118,13 +118,19 @@ func checkServices() {
 		}
 		
 		addr := fmt.Sprintf("%s:%s", host, port)
-		conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
-		if err != nil {
-			log.Fatalf("FATAL: Cannot connect to SMTP server %s: %v", addr, err)
-		}
-		conn.Close()
-		log.Printf("Successfully connected to SMTP server %s", addr)
+		log.Printf("Testing connection to SMTP server %s (this may timeout in restricted networks)...", addr)
 		
+		conn, err := net.DialTimeout("tcp", addr, 3*time.Second)
+		if err != nil {
+			log.Printf("WARNING: Cannot connect to SMTP server %s: %v", addr, err)
+			log.Println("This is likely due to network restrictions or firewall rules.")
+			log.Println("The application will continue, but email alerts won't be delivered.")
+		
+		} else {
+			conn.Close()
+			log.Printf("Successfully connected to SMTP server %s", addr)
+		}
+	
 	case "sendgrid":
 		if os.Getenv("SENDGRID_API_KEY") == "" {
 			log.Fatalf("FATAL: SendGrid API key not provided")
@@ -137,10 +143,7 @@ func checkServices() {
 		}
 		log.Println("Mailgun provider configured (API connectivity will be tested on first use)")
 		
-	case "mock":
-		log.Fatalf("FATAL: Mock email provider is not allowed")
-		
 	default:
-		log.Fatalf("FATAL: Unknown email provider: %s", emailProvider)
+		log.Printf("WARNING: Unknown email provider: %s", emailProvider)
 	}
 }

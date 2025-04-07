@@ -121,7 +121,6 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 </html>
 `, elder.Name, alert.Datetime.Format("02/01 15:04"), alert.ElderLat, alert.ElderLong)
 	
-	// Use async sending and don't fail the alert creation if email sending fails
 	s.emailService.SendMessageAsync(user.Email, subject, message)
 	
 	log.Printf("Emergency alert created for elder %s, email notification queued", elder.Name)
