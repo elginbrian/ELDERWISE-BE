@@ -68,33 +68,19 @@ func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error 
 		return fmt.Errorf("image path is required")
 	}
 	
-	if upload.EntityType == nil {
-		return fmt.Errorf("entity type is required")
-	}
-	
-	entityType := models.EntityType(*upload.EntityType)
-	isValid := false
-	
-	switch entityType {
-	case models.EntityTypeElder, models.EntityTypeCaregiver, 
-		 models.EntityTypeUser, models.EntityTypeAgenda, 
-		 models.EntityTypeArea, models.EntityTypeGeneral:
-		isValid = true
-	}
-	
-	if !isValid {
-		return fmt.Errorf("invalid entity type: %s", *upload.EntityType)
+	if !upload.EntityType.IsValid() {
+		return fmt.Errorf("invalid entity type: %s", upload.EntityType)
 	}
 	
 	if upload.EntityID == nil || *upload.EntityID == "" {
 		return fmt.Errorf("entity ID is required when entity type is provided")
 	}
 	
-	if entityType == models.EntityTypeElder {
+	if upload.EntityType == models.EntityTypeElder {
 		if _, err := s.elderRepo.FindByID(*upload.EntityID); err != nil {
 			return fmt.Errorf("elder with ID %s not found", *upload.EntityID)
 		}
-	} else if entityType == models.EntityTypeCaregiver {
+	} else if upload.EntityType == models.EntityTypeCaregiver {
 		if _, err := s.caregiverRepo.FindByID(*upload.EntityID); err != nil {
 			return fmt.Errorf("caregiver with ID %s not found", *upload.EntityID)
 		}
@@ -113,7 +99,7 @@ func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error 
 	file := &models.StorageFile{
 		FileID:     upload.ID,
 		Name:       getFileNameFromPath(upload.Path),
-		BucketName: getBucketFromURL(upload.URL),
+		BucketName: getBucketFromURL(),
 		Path:       upload.Path,
 		URL:        upload.URL,
 		UploadedAt: uploadedAt,
@@ -127,7 +113,7 @@ func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error 
 	
 	entityID := *upload.EntityID
 	
-	switch entityType {
+	switch upload.EntityType {
 	case models.EntityTypeElder:
 		return s.updateElderImage(entityID, upload.URL)
 	case models.EntityTypeCaregiver:
@@ -174,6 +160,6 @@ func getFileNameFromPath(path string) string {
 	return path
 }
 
-func getBucketFromURL(url string) string {
+func getBucketFromURL() string {
 	return "elderwise-images" 
 }

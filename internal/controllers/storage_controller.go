@@ -57,17 +57,10 @@ func (c *StorageController) ProcessEntityImage(ctx *fiber.Ctx) error {
 		})
 	}
 	
-	if upload.EntityType == nil {
+	if !upload.EntityType.IsValid() {
 		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
 			Success: false,
-			Message: "Entity type is required",
-		})
-	}
-	
-	if *upload.EntityType == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
-			Success: false,
-			Message: "Entity type cannot be empty",
+			Message: "Invalid entity type",
 		})
 	}
 	
