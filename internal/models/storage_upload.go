@@ -17,7 +17,6 @@ const (
 	EntityTypeGeneral   EntityType = "general"
 )
 
-// IsValid checks if the EntityType is one of the predefined types
 func (et EntityType) IsValid() bool {
 	switch et {
 	case EntityTypeElder, EntityTypeCaregiver, EntityTypeUser, EntityTypeAgenda, EntityTypeArea, EntityTypeGeneral:
@@ -27,14 +26,12 @@ func (et EntityType) IsValid() bool {
 	}
 }
 
-// UnmarshalJSON implements custom unmarshaling for EntityType
 func (et *EntityType) UnmarshalJSON(data []byte) error {
 	var value string
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
 
-	// Handle the case where frontend enum values might come in different formats
 	switch value {
 	case "elder", "EntityType.elder":
 		*et = EntityTypeElder
@@ -58,8 +55,8 @@ type StorageUpload struct {
 	ID         string     `json:"id"`
 	URL        string     `json:"url"`
 	Path       string     `json:"path"`
-	CreatedAt  *time.Time `json:"created_at"`
-	UserID     *string    `json:"user_id"`
-	EntityID   *string    `json:"entity_id"`
-	EntityType EntityType `json:"entity_type"`
+	CreatedAt  *time.Time `json:"created_at,omitempty"`
+	UserID     *string    `json:"userId,omitempty"`       // Changed from user_id to match frontend
+	EntityID   *string    `json:"entityId,omitempty"`     // Changed from entity_id to match frontend
+	EntityType EntityType `json:"entityType"`             // Changed from entity_type to match frontend
 }
