@@ -48,7 +48,7 @@ services:
       - SUPABASE_BUCKETNAME=elderwise-images
 
       - EMAIL_PROVIDER=sendgrid
-      - SENDGRID_API_KEY=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
+      - SENDGRID_API_KEY=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
       - EMAIL_FROM=elginbrian49@student.ub.ac.id
       - EMAIL_FROM_NAME=Elderwise Alert System
 
