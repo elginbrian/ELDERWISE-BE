@@ -76,7 +76,7 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 	protected.Get("/elders/:elder_id", rs.ElderController.GetElderByID)
 	protected.Post("/elders", rs.ElderController.CreateElder)
 	protected.Put("/elders/:elder_id", rs.ElderController.UpdateElder)
-	protected.Get("/elders/:elder_id/areas", controllers.GetElderAreas)
+	protected.Get("/elders/:elder_id/areas", rs.ElderController.GetElderAreas) // Changed from controllers.GetElderAreas
 	protected.Get("/elders/:elder_id/location-history", rs.LocationHistoryController.GetElderLocationHistory)
 	protected.Get("/elders/:elder_id/agendas", rs.AgendaController.GetElderAgendas)
 	protected.Get("/elders/:elder_id/emergency-alerts", controllers.GetElderEmergencyAlerts)

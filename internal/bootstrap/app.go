@@ -87,7 +87,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
-	elderController := controllers.NewElderController(elderService)
+	elderController := controllers.NewElderController(elderService, areaService)
 	areaController := controllers.NewAreaController(areaService)
 	storageController := controllers.NewStorageController(storageService, supabaseConfig)
 	emergencyAlertController := controllers.NewEmergencyAlertController(
