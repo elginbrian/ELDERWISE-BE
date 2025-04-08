@@ -66,6 +66,9 @@ func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 		})
 	}
 
+	// Clear the area ID to ensure a new one is generated
+	area.AreaID = ""
+
 	if err := ac.service.CreateArea(&area); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
 			Success: false,
