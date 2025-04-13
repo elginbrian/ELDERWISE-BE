@@ -10,11 +10,15 @@ import (
 )
 
 type ElderController struct {
-	service services.ElderService
+	service     services.ElderService
+	areaService services.AreaService
 }
 
-func NewElderController(service services.ElderService) *ElderController {
-	return &ElderController{service: service}
+func NewElderController(service services.ElderService, areaService services.AreaService) *ElderController {
+	return &ElderController{
+		service:     service,
+		areaService: areaService,
+	}
 }
 
 // GetElderByID godoc
@@ -157,27 +161,43 @@ func (ec *ElderController) GetEldersByUserID(c *fiber.Ctx) error {
 	})
 }
 
-func GetElderAreas(c *fiber.Ctx) error {
+// GetElderAreas godoc
+// @Summary Get areas by elder ID
+// @Description Get all areas associated with an elder
+// @Tags elders
+// @Accept json
+// @Produce json
+// @Param elder_id path string true "Elder ID"
+// @Success 200 {object} res.ResponseWrapper{data=res.AreasResponseDTO} "Areas retrieved successfully"
+// @Failure 404 {object} res.ResponseWrapper "Elder not found"
+// @Failure 500 {object} res.ResponseWrapper "Failed to retrieve areas"
+// @Router /elders/{elder_id}/areas [get]
+// @Security Bearer
+func (ec *ElderController) GetElderAreas(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
-	areas := []models.Area{
-		{
-			AreaID:          "area1",
-			ElderID:         elderID,
-			CaregiverID:     "dummy-caregiver-id",
-			CenterLat:       -6.200000,
-			CenterLong:      106.816666,
-			FreeAreaRadius:  100,
-			WatchAreaRadius: 50,
-			IsActive:        true,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
-		},
+	
+	_, err := ec.service.GetElderByID(elderID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Elder not found",
+			Error:   err.Error(),
+		})
 	}
-	responseData := res.AreasResponseDTO{Areas: areas}
+	
+	areas, err := ec.areaService.GetAreasByElder(elderID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to retrieve areas",
+			Error:   err.Error(),
+		})
+	}
+	
 	return c.JSON(res.ResponseWrapper{
 		Success: true,
 		Message: "Areas retrieved successfully",
-		Data:    responseData,
+		Data:    res.AreasResponseDTO{Areas: areas},
 	})
 }
 
@@ -253,3 +273,5 @@ func GetElderEmergencyAlerts(c *fiber.Ctx) error {
 		Data:    responseData,
 	})
 }
+
+

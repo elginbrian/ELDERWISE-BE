@@ -11,3 +11,4 @@ type EmergencyAlert struct {
 	ElderLong        float64   `json:"elder_long"`
 	IsDismissed      bool      `json:"is_dismissed"`
 }
+

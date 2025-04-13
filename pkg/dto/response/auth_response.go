@@ -11,3 +11,4 @@ type RegisterResponseDTO struct {
 type LoginResponseDTO struct {
 	Token string `json:"token"`
 }
+

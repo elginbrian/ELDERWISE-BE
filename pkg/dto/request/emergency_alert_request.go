@@ -12,3 +12,5 @@ type EmergencyAlertRequestDTO struct {
 	ElderLong   float64   `json:"elder_long" validate:"required"`
 	IsDismissed bool      `json:"is_dismissed default:false"` 
 }
+
+

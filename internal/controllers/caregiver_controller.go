@@ -119,3 +119,5 @@ func (ctr *CaregiverController) UpdateCaregiver(c *fiber.Ctx) error {
 		Data:    res.CaregiverResponseDTO{Caregiver: caregiver},
 	})
 }
+
+

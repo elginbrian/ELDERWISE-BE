@@ -66,6 +66,8 @@ func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 		})
 	}
 
+	area.AreaID = ""
+
 	if err := ac.service.CreateArea(&area); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(res.ResponseWrapper{
 			Success: false,
@@ -176,3 +178,5 @@ func (ac *AreaController) GetAreasByCaregiver(c *fiber.Ctx) error {
 		Data:    res.AreasResponseDTO{Areas: areas},
 	})
 }
+
+

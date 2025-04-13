@@ -16,6 +16,16 @@ services:
     networks:
       - elderwise_network
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: elderwise_mailhog_dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - elderwise_network
+    restart: always
+
   app:
     build:
       context: .
@@ -28,19 +38,33 @@ services:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=elderwise_dev
       - POSTGRES_TIMEZONE=Asia/Jakarta
+
+      # Application settings
       - ENV=development
+
+      # Storage settings
       - SUPABASE_URL=https://ucayizjdmgxgwweshzag.supabase.co
       - SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVjYXlpempkbWd4Z3d3ZXNoemFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM3NjQwMTgsImV4cCI6MjA1OTM0MDAxOH0.pwFn0khq87rxYRim1lQezFMbot34dSp1xq-8h6XFV0o
       - SUPABASE_BUCKETNAME=elderwise-images
-      - EMAIL_USERNAME=elginbrian94@gmail.com
-      - EMAIL_PASSWORD=kdlklyerxgrcaxwg
+
+      - EMAIL_PROVIDER=sendgrid
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - EMAIL_FROM=elginbrian49@student.ub.ac.id
       - EMAIL_FROM_NAME=Elderwise Alert System
-      - EMAIL_PORT=465
+
+      # Common settings
+      - EMAIL_CONTINUE_ON_ERROR=true
+      - EMAIL_MAX_RETRIES=3
+      - EMAIL_HEALTH_CHECK_TIMEOUT=3
+
+      # Other settings
       - NETWORK_TEST_ON_STARTUP=true
+
     ports:
       - "4000:3000"
     depends_on:
       - postgres
+      - mailhog
     restart: always
     networks:
       - elderwise_network

@@ -34,3 +34,5 @@ func (r *caregiverRepositoryImpl) Create(caregiver *models.Caregiver) error {
 func (r *caregiverRepositoryImpl) Update(caregiver *models.Caregiver) error {
 	return r.db.Save(caregiver).Error
 }
+
+

@@ -50,6 +50,27 @@ func (c *StorageController) ProcessEntityImage(ctx *fiber.Ctx) error {
 		})
 	}
 	
+	if upload.Path == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Image path is required",
+		})
+	}
+	
+	if !upload.EntityType.IsValid() {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Invalid entity type",
+		})
+	}
+	
+	if upload.EntityID == nil || *upload.EntityID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Entity ID is required when entity type is provided",
+		})
+	}
+	
 	if upload.ID == "" {
 		upload.ID = uuid.New().String()
 	}
@@ -68,3 +89,5 @@ func (c *StorageController) ProcessEntityImage(ctx *fiber.Ctx) error {
 		Data:    upload,
 	})
 }
+
+

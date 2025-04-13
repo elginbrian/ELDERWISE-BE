@@ -1,16 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"net"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/config"
 	"github.com/elginbrian/ELDERWISE-BE/docs"
 	"github.com/elginbrian/ELDERWISE-BE/internal/bootstrap"
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	_ "github.com/swaggo/fiber-swagger" // swagger middleware
+	_ "github.com/swaggo/fiber-swagger"
 )
 
 // @title ELDERWISE API
@@ -61,6 +64,7 @@ func main() {
 		&models.LocationHistory{},
 		&models.LocationHistoryPoint{},
 		&models.StorageFile{}, 
+		&models.Notification{},
 	)
 	if err != nil {
 		log.Fatal("Auto migration gagal: ", err)
@@ -74,6 +78,8 @@ func main() {
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
 		AllowCredentials: false, 
 	}))
+
+	checkServices()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -97,3 +103,50 @@ func setupLogging() (*os.File, error) {
 	
 	return logFile, nil
 }
+
+func checkServices() {
+	emailProvider := os.Getenv("EMAIL_PROVIDER")
+	
+	switch emailProvider {
+	case "smtp":
+		host := os.Getenv("EMAIL_HOST")
+		if host == "" {
+			host = "smtp.gmail.com"
+		}
+		port := os.Getenv("EMAIL_PORT")
+		if port == "" {
+			port = "465"
+		}
+		
+		addr := fmt.Sprintf("%s:%s", host, port)
+		log.Printf("Testing connection to SMTP server %s (this may timeout in restricted networks)...", addr)
+		
+		conn, err := net.DialTimeout("tcp", addr, 3*time.Second)
+		if err != nil {
+			log.Printf("WARNING: Cannot connect to SMTP server %s: %v", addr, err)
+			log.Println("This is likely due to network restrictions or firewall rules.")
+			log.Println("The application will continue, but email alerts won't be delivered.")
+		
+		} else {
+			conn.Close()
+			log.Printf("Successfully connected to SMTP server %s", addr)
+		}
+	
+	case "sendgrid":
+		if os.Getenv("SENDGRID_API_KEY") == "" {
+			log.Fatalf("FATAL: SendGrid API key not provided")
+		}
+		log.Println("SendGrid provider configured (API connectivity will be tested on first use)")
+		
+	case "mailgun":
+		if os.Getenv("MAILGUN_API_KEY") == "" || os.Getenv("MAILGUN_DOMAIN") == "" {
+			log.Fatalf("FATAL: Mailgun API key or domain not provided")
+		}
+		log.Println("Mailgun provider configured (API connectivity will be tested on first use)")
+		
+	default:
+		log.Printf("WARNING: Unknown email provider: %s", emailProvider)
+	}
+}
+
+

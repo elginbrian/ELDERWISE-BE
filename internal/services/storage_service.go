@@ -60,16 +60,46 @@ func (s *storageService) SaveFile(file *models.StorageFile) error {
 }
 
 func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error {
+	if upload.URL == "" {
+		return fmt.Errorf("image URL is required")
+	}
+	
+	if upload.Path == "" {
+		return fmt.Errorf("image path is required")
+	}
+	
+	if !upload.EntityType.IsValid() {
+		return fmt.Errorf("invalid entity type: %s", upload.EntityType)
+	}
+	
+	if upload.EntityID == nil || *upload.EntityID == "" {
+		return fmt.Errorf("entity ID is required when entity type is provided")
+	}
+	
+	if upload.EntityType == models.EntityTypeElder {
+		if _, err := s.elderRepo.FindByID(*upload.EntityID); err != nil {
+			return fmt.Errorf("elder with ID %s not found", *upload.EntityID)
+		}
+	} else if upload.EntityType == models.EntityTypeCaregiver {
+		if _, err := s.caregiverRepo.FindByID(*upload.EntityID); err != nil {
+			return fmt.Errorf("caregiver with ID %s not found", *upload.EntityID)
+		}
+	}
+	
 	now := time.Now()
 	uploadedAt := now
 	if upload.CreatedAt != nil {
 		uploadedAt = *upload.CreatedAt
 	}
 	
+	if upload.ID == "" {
+		upload.ID = uuid.New().String()
+	}
+	
 	file := &models.StorageFile{
 		FileID:     upload.ID,
 		Name:       getFileNameFromPath(upload.Path),
-		BucketName: getBucketFromURL(upload.URL),
+		BucketName: getBucketFromURL(),
 		Path:       upload.Path,
 		URL:        upload.URL,
 		UploadedAt: uploadedAt,
@@ -81,14 +111,9 @@ func (s *storageService) ProcessImageUpload(upload *models.StorageUpload) error 
 		return fmt.Errorf("failed to save file record: %w", err)
 	}
 	
-	if upload.EntityType == nil || upload.EntityID == nil {
-		return nil
-	}
-
-	entityType := models.EntityType(*upload.EntityType)
 	entityID := *upload.EntityID
 	
-	switch entityType {
+	switch upload.EntityType {
 	case models.EntityTypeElder:
 		return s.updateElderImage(entityID, upload.URL)
 	case models.EntityTypeCaregiver:
@@ -135,6 +160,6 @@ func getFileNameFromPath(path string) string {
 	return path
 }
 
-func getBucketFromURL(url string) string {
+func getBucketFromURL() string {
 	return "elderwise-images" 
 }

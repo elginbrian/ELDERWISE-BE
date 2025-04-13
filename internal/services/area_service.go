@@ -5,6 +5,7 @@ import (
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"github.com/elginbrian/ELDERWISE-BE/internal/repository"
+	"github.com/google/uuid"
 )
 
 type AreaService interface {
@@ -13,6 +14,7 @@ type AreaService interface {
 	UpdateArea(areaID string, area *models.Area) error
 	DeleteArea(areaID string) error
 	GetAreasByCaregiver(caregiverID string) ([]models.Area, error)
+	GetAreasByElder(elderID string) ([]models.Area, error)
 }
 
 type areaService struct {
@@ -28,6 +30,7 @@ func (s *areaService) GetAreaByID(areaID string) (*models.Area, error) {
 }
 
 func (s *areaService) CreateArea(area *models.Area) error {
+	area.AreaID = uuid.New().String()
 	area.CreatedAt = time.Now()
 	area.UpdatedAt = time.Now()
 	return s.repo.Create(area)
@@ -51,3 +54,9 @@ func (s *areaService) DeleteArea(areaID string) error {
 func (s *areaService) GetAreasByCaregiver(caregiverID string) ([]models.Area, error) {
 	return s.repo.FindByCaregiver(caregiverID)
 }
+
+func (s *areaService) GetAreasByElder(elderID string) ([]models.Area, error) {
+	return s.repo.FindByElder(elderID)
+}
+
+

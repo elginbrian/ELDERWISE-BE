@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
@@ -11,20 +12,25 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtSecret = []byte("your-secret-key") 
-
 type AuthService interface {
 	Register(user *models.User) (*models.User, error)
 	Login(email, password string) (string, error)
 	GetUserByID(userID string) (*models.User, error)
+	GetUserFromToken(tokenString string) (*models.User, error)
+	SetJWTSecret(secret string)
 }
 
 type authService struct {
-	repo repository.AuthRepository
+	repo      repository.AuthRepository
+	jwtSecret []byte
 }
 
 func NewAuthService(repo repository.AuthRepository) AuthService {
 	return &authService{repo: repo}
+}
+
+func (s *authService) SetJWTSecret(secret string) {
+	s.jwtSecret = []byte(secret)
 }
 
 func (s *authService) Register(user *models.User) (*models.User, error) {
@@ -63,7 +69,7 @@ func (s *authService) Login(email, password string) (string, error) {
 		"exp":     time.Now().Add(72 * time.Hour).Unix(),
 	})
 
-	tokenString, err := token.SignedString(jwtSecret)
+	tokenString, err := token.SignedString(s.jwtSecret)
 	if err != nil {
 		return "", err
 	}
@@ -73,3 +79,36 @@ func (s *authService) Login(email, password string) (string, error) {
 func (s *authService) GetUserByID(userID string) (*models.User, error) {
 	return s.repo.GetUserByID(userID)
 }
+
+func (s *authService) GetUserFromToken(tokenString string) (*models.User, error) {
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("invalid token signing method")
+		}
+		return s.jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("invalid token claims")
+	}
+
+	userID, ok := claims["user_id"].(string)
+	if !ok {
+		return nil, errors.New("user ID not found in token")
+	}
+
+	return s.GetUserByID(userID)
+}
+
+

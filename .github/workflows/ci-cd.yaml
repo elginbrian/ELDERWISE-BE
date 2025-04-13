@@ -92,6 +92,8 @@ jobs:
 
             echo "Deploying branch: $BRANCH"
 
+            export SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}"
+
             if [ "$BRANCH" = "main" ]; then
               cd github/elderwise-be-prod || { echo "Directory github/elderwise-be-prod not found."; exit 1; }
               git reset --hard
@@ -107,7 +109,7 @@ jobs:
               fi
               docker-compose -f docker-compose.prod.yml down -v
               docker-compose -f docker-compose.prod.yml build
-              docker-compose -f docker-compose.prod.yml up -d
+              SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}" docker-compose -f docker-compose.prod.yml up -d
             else
               cd github/elderwise-be-dev || { echo "Directory github/elderwise-be-dev not found."; exit 1; }
               git reset --hard
@@ -142,7 +144,8 @@ jobs:
               docker-compose -f docker-compose.dev.yml down
               
               docker-compose -f docker-compose.dev.yml build
-              docker-compose -f docker-compose.dev.yml up -d
+              # Pass the environment variable to Docker Compose
+              SENDGRID_API_KEY="${{ secrets.SENDGRID_API_KEY }}" docker-compose -f docker-compose.dev.yml up -d
             fi
 
             echo "Deployment completed successfully."

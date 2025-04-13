@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"time"
+
 	"github.com/elginbrian/ELDERWISE-BE/internal/models"
 	"gorm.io/gorm"
 )
@@ -10,6 +12,7 @@ type EmergencyAlertRepository interface {
 	FindByID(alertID string) (*models.EmergencyAlert, error)
 	Update(alert *models.EmergencyAlert) error
 	FindByElderID(elderID string) ([]models.EmergencyAlert, error)
+	GetRecentAlerts(after time.Time) ([]models.EmergencyAlert, error)
 }
 
 type emergencyAlertRepository struct {
@@ -43,3 +46,11 @@ func (r *emergencyAlertRepository) FindByElderID(elderID string) ([]models.Emerg
 	}
 	return alerts, nil
 }
+
+
+func (repo *emergencyAlertRepository) GetRecentAlerts(after time.Time) ([]models.EmergencyAlert, error) {
+	var alerts []models.EmergencyAlert
+	result := repo.db.Where("datetime >= ?", after).Find(&alerts)
+	return alerts, result.Error
+}
+

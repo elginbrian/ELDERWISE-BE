@@ -9,3 +9,5 @@ type LocationHistoryResponseDTO struct {
 type LocationHistoryPointsResponseDTO struct {
 	Points []models.LocationHistoryPoint `json:"points"`
 }
+
+

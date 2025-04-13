@@ -104,3 +104,43 @@ func (ac *AuthController) LoginHandler(c *fiber.Ctx) error {
 		Data:    resDTO,
 	})
 }
+
+// GetCurrentUser godoc
+// @Summary Get current user information
+// @Description Get the current user information based on JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Success 200 {object} res.ResponseWrapper{data=models.User} "User retrieved successfully"
+// @Failure 401 {object} res.ResponseWrapper "Unauthorized"
+// @Router /auth/me [get]
+// @Security Bearer
+func (ac *AuthController) GetCurrentUser(c *fiber.Ctx) error {
+	authHeader := c.Get("Authorization")
+	if authHeader == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Authorization header is required",
+			Error:   "unauthorized",
+		})
+	}
+
+	user, err := ac.authService.GetUserFromToken(authHeader)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(res.ResponseWrapper{
+			Success: false,
+			Message: "Failed to authenticate",
+			Error:   err.Error(),
+		})
+	}
+
+	user.Password = ""
+
+	return c.JSON(res.ResponseWrapper{
+		Success: true,
+		Message: "User retrieved successfully",
+		Data:    user,
+	})
+}
+
+

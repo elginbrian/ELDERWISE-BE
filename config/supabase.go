@@ -15,3 +15,5 @@ func NewSupabaseConfig() *SupabaseConfig {
 		BucketName: os.Getenv("SUPABASE_BUCKETNAME"),
 	}
 }
+
+
