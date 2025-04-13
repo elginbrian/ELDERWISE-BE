@@ -64,6 +64,7 @@ func main() {
 		&models.LocationHistory{},
 		&models.LocationHistoryPoint{},
 		&models.StorageFile{}, 
+		&models.Notification{},
 	)
 	if err != nil {
 		log.Fatal("Auto migration gagal: ", err)
@@ -147,3 +148,4 @@ func checkServices() {
 		log.Printf("WARNING: Unknown email provider: %s", emailProvider)
 	}
 }
+

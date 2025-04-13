@@ -176,7 +176,6 @@ func (ec *ElderController) GetEldersByUserID(c *fiber.Ctx) error {
 func (ec *ElderController) GetElderAreas(c *fiber.Ctx) error {
 	elderID := c.Params("elder_id")
 	
-	// Verify that the elder exists
 	_, err := ec.service.GetElderByID(elderID)
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(res.ResponseWrapper{
@@ -274,3 +273,4 @@ func GetElderEmergencyAlerts(c *fiber.Ctx) error {
 		Data:    responseData,
 	})
 }
+

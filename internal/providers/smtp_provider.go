@@ -115,15 +115,12 @@ func (p *SMTPProvider) SendEmail(to, subject, htmlBody string) error {
 	return nil
 }
 
-// sendGmailSimple sends an email through Gmail using a simplified approach that works in more environments
 func (p *SMTPProvider) sendGmailSimple(to, subject, htmlBody string) error {
 	from := p.config.FromEmail
 	password := p.config.Password
 	
-	// Set up authentication information
 	auth := smtp.PlainAuth("", from, password, "smtp.gmail.com")
 	
-	// Compose the message
 	msg := []byte("From: " + p.config.FromName + " <" + from + ">\r\n" +
 		"To: " + to + "\r\n" +
 		"Subject: " + subject + "\r\n" +
@@ -132,7 +129,6 @@ func (p *SMTPProvider) sendGmailSimple(to, subject, htmlBody string) error {
 		"\r\n" +
 		htmlBody + "\r\n")
 	
-	// Try sending with different port configurations
 	err1 := smtp.SendMail("smtp.gmail.com:587", auth, from, []string{to}, msg)
 	if err1 == nil {
 		log.Printf("Email sent successfully via port 587")
@@ -151,7 +147,6 @@ func (p *SMTPProvider) sendGmailSimple(to, subject, htmlBody string) error {
 		return nil
 	}
 	
-	// Log all errors
 	log.Printf("Failed to send via 587: %v", err1)
 	log.Printf("Failed to send via 465: %v", err2)
 	log.Printf("Failed to send via 25: %v", err3)
@@ -166,3 +161,4 @@ func (p *SMTPProvider) SendEmailAsync(to, subject, htmlBody string) {
 		}
 	}()
 }
+

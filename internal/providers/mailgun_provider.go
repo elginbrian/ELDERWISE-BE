@@ -68,3 +68,4 @@ func (p *MailgunProvider) SendEmailAsync(to, subject, htmlBody string) {
 		}
 	}()
 }
+

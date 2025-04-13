@@ -26,7 +26,6 @@ func (uc *UserController) GetUserByID(c *fiber.Ctx) error {
 		})
 	}
 
-	// Don't expose password
 	user.Password = ""
 
 	responseData := res.UserResponseDTO{
@@ -85,3 +84,4 @@ func (uc *UserController) GetUserElders(c *fiber.Ctx) error {
 		Data:    responseData,
 	})
 }
+

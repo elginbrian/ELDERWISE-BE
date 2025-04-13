@@ -38,3 +38,4 @@ func (r *authRepository) GetUserByID(userID string) (*models.User, error) {
 	}
 	return &user, nil
 }
+

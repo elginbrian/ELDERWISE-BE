@@ -14,7 +14,7 @@ type AreaService interface {
 	UpdateArea(areaID string, area *models.Area) error
 	DeleteArea(areaID string) error
 	GetAreasByCaregiver(caregiverID string) ([]models.Area, error)
-	GetAreasByElder(elderID string) ([]models.Area, error) // New method
+	GetAreasByElder(elderID string) ([]models.Area, error)
 }
 
 type areaService struct {
@@ -58,3 +58,4 @@ func (s *areaService) GetAreasByCaregiver(caregiverID string) ([]models.Area, er
 func (s *areaService) GetAreasByElder(elderID string) ([]models.Area, error) {
 	return s.repo.FindByElder(elderID)
 }
+
