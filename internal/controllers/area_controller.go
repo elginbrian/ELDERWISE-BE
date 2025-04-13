@@ -66,7 +66,6 @@ func (ac *AreaController) CreateArea(c *fiber.Ctx) error {
 		})
 	}
 
-	// Clear the area ID to ensure a new one is generated
 	area.AreaID = ""
 
 	if err := ac.service.CreateArea(&area); err != nil {
@@ -179,3 +178,4 @@ func (ac *AreaController) GetAreasByCaregiver(c *fiber.Ctx) error {
 		Data:    res.AreasResponseDTO{Areas: areas},
 	})
 }
+

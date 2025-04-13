@@ -94,7 +94,7 @@ func NewEmailConfig() *EmailConfig {
 		MailgunDomain:    os.Getenv("MAILGUN_DOMAIN"),
 		
 		MaxRetries:       maxRetries,
-		HealthCheckTimeout: 5 * time.Second, // Default to 5 seconds
+		HealthCheckTimeout: 5 * time.Second,
 	}
 	
 	log.Printf("Email configuration: Provider=%s, Fallback=%s, From=%s <%s>", 
@@ -132,3 +132,4 @@ func (c *EmailConfig) ValidateConfig() error {
 	
 	return nil
 }
+

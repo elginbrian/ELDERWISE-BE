@@ -18,7 +18,7 @@ type SendGridProvider struct {
 func NewSendGridProvider(config *config.EmailConfig) *SendGridProvider {
 	return &SendGridProvider{
 		apiKey:    config.SendGridAPIKey,
-		fromEmail: config.FromEmail,  // This can be your Gmail address
+		fromEmail: config.FromEmail,
 		fromName:  config.FromName,
 	}
 }
@@ -75,3 +75,4 @@ func quoteString(s string) string {
 	s = strings.ReplaceAll(s, "\t", "\\t")
 	return "\"" + s + "\""
 }
+

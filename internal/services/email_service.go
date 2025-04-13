@@ -59,12 +59,10 @@ func NewEmailService(config *config.EmailConfig) (EmailService, error) {
 	}, nil
 }
 
-// NewLoggingEmailService creates a minimal email service that only logs messages but doesn't send them
 func NewLoggingEmailService() EmailService {
 	return &loggingEmailService{}
 }
 
-// loggingEmailService implements EmailService but only logs messages without sending them
 type loggingEmailService struct{}
 
 func (s *loggingEmailService) SendMessage(to, subject, htmlBody string) error {
@@ -80,16 +78,14 @@ func (s *loggingEmailService) SendMessageAsync(to, subject, htmlBody string) {
 }
 
 func (s *loggingEmailService) HealthCheck() bool {
-	return true // Always considered healthy since it just logs
+	return true
 }
 
-// tryWithRetry attempts to send an email with retry mechanism
 func (s *emailService) tryWithRetry(provider providers.EmailProvider, to, subject, htmlBody string) error {
 	var lastErr error
 	
 	for attempt := 0; attempt <= s.config.MaxRetries; attempt++ {
 		if attempt > 0 {
-			// Wait before retry with exponential backoff
 			backoff := time.Duration(attempt*attempt) * 500 * time.Millisecond
 			time.Sleep(backoff)
 			log.Printf("Retrying email to %s (attempt %d/%d)", to, attempt, s.config.MaxRetries)
@@ -97,7 +93,6 @@ func (s *emailService) tryWithRetry(provider providers.EmailProvider, to, subjec
 		
 		err := provider.SendEmail(to, subject, htmlBody)
 		if err == nil {
-			// Success
 			if attempt > 0 {
 				log.Printf("Email to %s succeeded after %d retries", to, attempt)
 			}
@@ -111,15 +106,12 @@ func (s *emailService) tryWithRetry(provider providers.EmailProvider, to, subjec
 	return fmt.Errorf("all attempts failed: %w", lastErr)
 }
 
-// SendMessage sends an email, falling back if primary provider fails
 func (s *emailService) SendMessage(to, subject, htmlBody string) error {
-	// Try primary provider with retry
 	err := s.tryWithRetry(s.primaryProvider, to, subject, htmlBody)
 	if err == nil {
 		return nil
 	}
 	
-	// If primary fails and fallback exists, try fallback
 	if s.fallbackProvider != nil {
 		log.Printf("Primary email provider failed, trying fallback for email to %s", to)
 		err = s.tryWithRetry(s.fallbackProvider, to, subject, htmlBody)
@@ -132,7 +124,6 @@ func (s *emailService) SendMessage(to, subject, htmlBody string) error {
 	return fmt.Errorf("email delivery failed: %w", err)
 }
 
-// SendMessageAsync sends an email asynchronously
 func (s *emailService) SendMessageAsync(to, subject, htmlBody string) {
 	go func() {
 		if err := s.SendMessage(to, subject, htmlBody); err != nil {
@@ -141,16 +132,13 @@ func (s *emailService) SendMessageAsync(to, subject, htmlBody string) {
 	}()
 }
 
-// HealthCheck tests if the email service is functional
 func (s *emailService) HealthCheck() bool {
 	switch s.config.Provider {
 	case "smtp":
-		// For SMTP, we can test connection to the server
 		provider := s.primaryProvider.(*providers.SMTPProvider)
 		return provider.TestConnection() == nil
 		
 	case "sendgrid", "mailgun":
-		// For API-based providers, we consider them healthy if they're configured
 		return s.config.ValidateConfig() == nil
 		
 	default:

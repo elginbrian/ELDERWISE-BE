@@ -59,3 +59,4 @@ func (s *elderServiceImpl) UpdateElder(elderID string, elder *models.Elder) (*mo
 func (s *elderServiceImpl) GetEldersByUserID(userID string) ([]models.Elder, error) {
 	return s.repo.FindByUserID(userID)
 }
+

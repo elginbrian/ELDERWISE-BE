@@ -15,7 +15,6 @@ import (
 )
 
 func AppBootstrap(db *gorm.DB) *fiber.App {
-	// Repositories
 	authRepo := repository.NewAuthRepository(db)
 	userRepo := repository.NewUserRepository(db)
 	caregiverRepo := repository.NewCaregiverRepository(db)
@@ -25,6 +24,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	emergencyAlertRepo := repository.NewEmergencyAlertRepository(db)
 	locationHistoryRepo := repository.NewLocationHistoryRepository(db)
 	agendaRepo := repository.NewAgendaRepository(db)
+	notificationRepo := repository.NewNotificationRepository(db)
 
 	supabaseConfig := config.NewSupabaseConfig()
 	emailConfig := config.NewEmailConfig()
@@ -82,8 +82,15 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	)
 	locationHistoryService := services.NewLocationHistoryService(locationHistoryRepo)
 	agendaService := services.NewAgendaService(agendaRepo)
+	notificationService := services.NewNotificationService(
+		notificationRepo,
+		locationHistoryRepo,
+		areaRepo,
+		agendaRepo,
+		emergencyAlertRepo,
+		elderRepo,
+	)
 
-	// Controllers
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
@@ -98,11 +105,11 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 	locationHistoryController := controllers.NewLocationHistoryController(locationHistoryService)
 	agendaController := controllers.NewAgendaController(agendaService)
 	
-	// Initialize the alert viewer controller
 	alertViewerController := controllers.NewAlertViewerController(
 		emergencyAlertRepo,
 		elderRepo,
 	)
+	notificationController := controllers.NewNotificationController(notificationService)
 	
 	routeSetup := routes.NewRouteSetup(
 		authController,
@@ -115,6 +122,7 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		agendaController,
 		locationHistoryController,
 		alertViewerController,
+		notificationController,
 	)
 
 	app := fiber.New()
@@ -123,3 +131,4 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 
 	return app
 }
+

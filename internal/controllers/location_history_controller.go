@@ -14,7 +14,6 @@ func NewLocationHistoryController(service *services.LocationHistoryService) *Loc
 	return &LocationHistoryController{service: service}
 }
 
-// GetLocationHistoryByID fetches a location history by its ID
 func (c *LocationHistoryController) GetLocationHistoryByID(ctx *fiber.Ctx) error {
 	historyID := ctx.Params("location_history_id")
 
@@ -38,7 +37,6 @@ func (c *LocationHistoryController) GetLocationHistoryByID(ctx *fiber.Ctx) error
 	})
 }
 
-// GetLocationHistoryPoints fetches points for a location history
 func (c *LocationHistoryController) GetLocationHistoryPoints(ctx *fiber.Ctx) error {
 	historyID := ctx.Params("location_history_id")
 
@@ -62,7 +60,6 @@ func (c *LocationHistoryController) GetLocationHistoryPoints(ctx *fiber.Ctx) err
 	})
 }
 
-// GetElderLocationHistory fetches location history for an elder
 func (c *LocationHistoryController) GetElderLocationHistory(ctx *fiber.Ctx) error {
 	elderID := ctx.Params("elder_id")
 
@@ -86,9 +83,7 @@ func (c *LocationHistoryController) GetElderLocationHistory(ctx *fiber.Ctx) erro
 	})
 }
 
-// Legacy function signatures to maintain compatibility with current routes
 func GetLocationHistoryByID(c *fiber.Ctx) error {
-	// This will be removed after routes are updated
 	return c.Status(fiber.StatusNotImplemented).JSON(res.ResponseWrapper{
 		Success: false,
 		Message: "This method is deprecated, please update your routes",
@@ -96,10 +91,10 @@ func GetLocationHistoryByID(c *fiber.Ctx) error {
 }
 
 func GetLocationHistoryPoints(c *fiber.Ctx) error {
-	// This will be removed after routes are updated
 	return c.Status(fiber.StatusNotImplemented).JSON(res.ResponseWrapper{
 		Success: false,
 		Message: "This method is deprecated, please update your routes",
 	})
 }
+
 

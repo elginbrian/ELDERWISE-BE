@@ -142,3 +142,4 @@ func (ac *AuthController) GetCurrentUser(c *fiber.Ctx) error {
 		Data:    user,
 	})
 }
+

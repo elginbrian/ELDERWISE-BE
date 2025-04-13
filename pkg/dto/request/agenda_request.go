@@ -13,3 +13,4 @@ type AgendaRequestDTO struct {
 	Datetime    time.Time `json:"datetime" validate:"required"`
 	IsFinished  bool      `json:"is_finished"`
 }
+

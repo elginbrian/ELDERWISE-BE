@@ -30,5 +30,5 @@ func SwaggerInfo() {
 	})
 }
 
-// This will be generated when you run the swag command
 var DocTemplate string
+

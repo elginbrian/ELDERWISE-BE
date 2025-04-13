@@ -56,7 +56,8 @@ type StorageUpload struct {
 	URL        string     `json:"url"`
 	Path       string     `json:"path"`
 	CreatedAt  *time.Time `json:"created_at,omitempty"`
-	UserID     *string    `json:"userId,omitempty"`       // Changed from user_id to match frontend
-	EntityID   *string    `json:"entityId,omitempty"`     // Changed from entity_id to match frontend
-	EntityType EntityType `json:"entityType"`             // Changed from entity_type to match frontend
+	UserID     *string    `json:"userId,omitempty"`
+	EntityID   *string    `json:"entityId,omitempty"`
+	EntityType EntityType `json:"entityType"`
 }
+

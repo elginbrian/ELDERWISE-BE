@@ -57,3 +57,4 @@ func AuthenticationMiddleware(config Config) fiber.Handler {
 		return c.Next()
 	}
 }
+

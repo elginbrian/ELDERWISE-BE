@@ -110,3 +110,4 @@ func (s *authService) GetUserFromToken(tokenString string) (*models.User, error)
 
 	return s.GetUserByID(userID)
 }
+

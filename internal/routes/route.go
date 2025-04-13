@@ -18,6 +18,7 @@ type RouteSetup struct {
 	AgendaController         *controllers.AgendaController
 	LocationHistoryController *controllers.LocationHistoryController
 	AlertViewerController    *controllers.AlertViewerController
+	NotificationController   *controllers.NotificationController
 }
 
 func NewRouteSetup(
@@ -31,6 +32,7 @@ func NewRouteSetup(
 	agendaController *controllers.AgendaController,
 	locationHistoryController *controllers.LocationHistoryController,
 	alertViewerController *controllers.AlertViewerController,
+	notificationController *controllers.NotificationController,
 	) *RouteSetup {
 	return &RouteSetup{
 		AuthController:           authController,
@@ -43,6 +45,7 @@ func NewRouteSetup(
 		AgendaController:         agendaController,
 		LocationHistoryController: locationHistoryController,
 		AlertViewerController:    alertViewerController,
+		NotificationController:   notificationController,
 	}
 }
 
@@ -76,7 +79,7 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 	protected.Get("/elders/:elder_id", rs.ElderController.GetElderByID)
 	protected.Post("/elders", rs.ElderController.CreateElder)
 	protected.Put("/elders/:elder_id", rs.ElderController.UpdateElder)
-	protected.Get("/elders/:elder_id/areas", rs.ElderController.GetElderAreas) // Changed from controllers.GetElderAreas
+	protected.Get("/elders/:elder_id/areas", rs.ElderController.GetElderAreas)
 	protected.Get("/elders/:elder_id/location-history", rs.LocationHistoryController.GetElderLocationHistory)
 	protected.Get("/elders/:elder_id/agendas", rs.AgendaController.GetElderAgendas)
 	protected.Get("/elders/:elder_id/emergency-alerts", controllers.GetElderEmergencyAlerts)
@@ -103,8 +106,14 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 	
 	protected.Get("/mock/emergency-alert", rs.EmergencyAlertController.MockEmergencyAlert)
 	api.Get("/alerts-viewer", rs.AlertViewerController.ViewAlerts)
+
+	protected.Get("/elders/:elder_id/notifications", rs.NotificationController.GetNotifications)
+	protected.Get("/elders/:elder_id/notifications/check", rs.NotificationController.CheckNotifications)
+	protected.Get("/elders/:elder_id/notifications/unread", rs.NotificationController.GetUnreadCount)
+	protected.Put("/notifications/:notification_id/read", rs.NotificationController.MarkNotificationAsRead)
 }
 
 func dummyHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Welcome to Elderwise by Masukin Andre ke Raion"})
 }
+
