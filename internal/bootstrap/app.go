@@ -90,7 +90,8 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 		emergencyAlertRepo,
 		elderRepo,
 	)
-
+	
+	emergencyAlertService.SetNotificationService(notificationService)
 	authController := controllers.NewAuthController(authService)
 	userController := controllers.NewUserController(userService)
 	caregiverController := controllers.NewCaregiverController(caregiverService)
@@ -131,4 +132,5 @@ func AppBootstrap(db *gorm.DB) *fiber.App {
 
 	return app
 }
+
 

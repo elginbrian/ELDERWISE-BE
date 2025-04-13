@@ -12,6 +12,7 @@ type AreaRepository interface {
 	Delete(areaID string) error
 	FindByCaregiver(caregiverID string) ([]models.Area, error)
 	FindByElder(elderID string) ([]models.Area, error)
+	FindByElderID(elderID string) ([]models.Area, error)
 }
 
 type areaRepository struct {
@@ -53,4 +54,11 @@ func (r *areaRepository) FindByElder(elderID string) ([]models.Area, error) {
 	err := r.db.Where("elder_id = ?", elderID).Find(&areas).Error
 	return areas, err
 }
+
+func (r *areaRepository) FindByElderID(elderID string) ([]models.Area, error) {
+	var areas []models.Area
+	err := r.db.Where("elder_id = ?", elderID).Find(&areas).Error
+	return areas, err
+}
+
 

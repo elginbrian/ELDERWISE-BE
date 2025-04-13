@@ -133,3 +133,4 @@ func (c *EmailConfig) ValidateConfig() error {
 	return nil
 }
 
+

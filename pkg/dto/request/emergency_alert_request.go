@@ -13,3 +13,4 @@ type EmergencyAlertRequestDTO struct {
 	IsDismissed bool      `json:"is_dismissed default:false"` 
 }
 
+

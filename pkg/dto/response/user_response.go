@@ -9,3 +9,4 @@ type UserResponseDTO struct {
 type UsersResponseDTO struct {
 	Users []models.User `json:"users"`
 }
+

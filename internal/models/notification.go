@@ -5,8 +5,9 @@ import "time"
 type NotificationType string
 
 const (
-	NotificationTypeAreaBreach    NotificationType = "AREA_BREACH"
-	NotificationTypeAgendaOverdue NotificationType = "AGENDA_OVERDUE"
+	NotificationTypeAreaBreach     NotificationType = "AREA_BREACH"
+	NotificationTypeAgendaOverdue  NotificationType = "AGENDA_OVERDUE"
+	NotificationTypeAgendaCompleted NotificationType = "AGENDA_COMPLETED"
 	NotificationTypeEmergencyAlert NotificationType = "EMERGENCY_ALERT"
 )
 
@@ -20,4 +21,5 @@ type Notification struct {
 	RelatedID      string           `json:"related_id"`
 	CreatedAt      time.Time        `json:"created_at"`
 }
+
 

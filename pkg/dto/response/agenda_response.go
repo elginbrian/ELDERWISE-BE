@@ -9,3 +9,4 @@ type AgendaResponseDTO struct {
 type AgendasResponseDTO struct {
 	Agendas []models.Agenda `json:"agendas"`
 }
+

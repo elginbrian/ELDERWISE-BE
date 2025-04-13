@@ -53,3 +53,4 @@ func (repo *emergencyAlertRepository) GetRecentAlerts(after time.Time) ([]models
 	result := repo.db.Where("datetime >= ?", after).Find(&alerts)
 	return alerts, result.Error
 }
+

@@ -179,3 +179,4 @@ func (ac *AreaController) GetAreasByCaregiver(c *fiber.Ctx) error {
 	})
 }
 
+

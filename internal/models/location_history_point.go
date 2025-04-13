@@ -9,3 +9,4 @@ type LocationHistoryPoint struct {
 	Longitude         float64   `json:"longitude"`
 	Timestamp         time.Time `json:"timestamp"`
 }
+

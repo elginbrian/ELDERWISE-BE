@@ -30,3 +30,4 @@ func (s *userServiceImpl) GetCaregiversByUserID(userID string) ([]models.Caregiv
 func (s *userServiceImpl) GetEldersByUserID(userID string) ([]models.Elder, error) {
 	return s.repo.FindEldersByUserID(userID)
 }
+

@@ -14,3 +14,4 @@ type AgendaRequestDTO struct {
 	IsFinished  bool      `json:"is_finished"`
 }
 
+
