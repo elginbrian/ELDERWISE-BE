@@ -145,3 +145,4 @@ func (s *emailService) HealthCheck() bool {
 		return false
 	}
 }
+

@@ -5,19 +5,27 @@ import (
 	"gorm.io/gorm"
 )
 
-type AgendaRepository struct {
+type AgendaRepository interface {
+	Create(agenda *models.Agenda) error
+	FindByID(agendaID string) (*models.Agenda, error)
+	FindByElderID(elderID string) ([]models.Agenda, error)
+	Update(agenda *models.Agenda) error
+	Delete(agendaID string) error
+}
+
+type agendaRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewAgendaRepository(db *gorm.DB) *AgendaRepository {
-	return &AgendaRepository{DB: db}
+func NewAgendaRepository(db *gorm.DB) AgendaRepository {
+	return &agendaRepositoryImpl{DB: db}
 }
 
-func (r *AgendaRepository) Create(agenda *models.Agenda) error {
+func (r *agendaRepositoryImpl) Create(agenda *models.Agenda) error {
 	return r.DB.Create(agenda).Error
 }
 
-func (r *AgendaRepository) FindByID(agendaID string) (*models.Agenda, error) {
+func (r *agendaRepositoryImpl) FindByID(agendaID string) (*models.Agenda, error) {
 	var agenda models.Agenda
 	err := r.DB.Where("agenda_id = ?", agendaID).First(&agenda).Error
 	if err != nil {
@@ -26,7 +34,7 @@ func (r *AgendaRepository) FindByID(agendaID string) (*models.Agenda, error) {
 	return &agenda, nil
 }
 
-func (r *AgendaRepository) FindByElderID(elderID string) ([]models.Agenda, error) {
+func (r *agendaRepositoryImpl) FindByElderID(elderID string) ([]models.Agenda, error) {
 	var agendas []models.Agenda
 	err := r.DB.Where("elder_id = ?", elderID).Find(&agendas).Error
 	if err != nil {
@@ -35,10 +43,11 @@ func (r *AgendaRepository) FindByElderID(elderID string) ([]models.Agenda, error
 	return agendas, nil
 }
 
-func (r *AgendaRepository) Update(agenda *models.Agenda) error {
+func (r *agendaRepositoryImpl) Update(agenda *models.Agenda) error {
 	return r.DB.Save(agenda).Error
 }
 
-func (r *AgendaRepository) Delete(agendaID string) error {
+func (r *agendaRepositoryImpl) Delete(agendaID string) error {
 	return r.DB.Where("agenda_id = ?", agendaID).Delete(&models.Agenda{}).Error
 }
+

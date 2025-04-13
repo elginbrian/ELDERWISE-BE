@@ -163,4 +163,3 @@ func getFileNameFromPath(path string) string {
 func getBucketFromURL() string {
 	return "elderwise-images" 
 }
-

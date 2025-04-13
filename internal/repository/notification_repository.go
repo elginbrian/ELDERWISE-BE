@@ -8,15 +8,23 @@ import (
 	"gorm.io/gorm"
 )
 
-type NotificationRepository struct {
+type NotificationRepository interface {
+	Create(notification *models.Notification) error
+	FindByID(notificationID string) (*models.Notification, error)
+	FindByElderID(elderID string) ([]models.Notification, error)
+	MarkAsRead(notificationID string) error
+	CountUnread(elderID string) (int64, error)
+}
+
+type notificationRepositoryImpl struct {
 	DB *gorm.DB
 }
 
-func NewNotificationRepository(db *gorm.DB) *NotificationRepository {
-	return &NotificationRepository{DB: db}
+func NewNotificationRepository(db *gorm.DB) NotificationRepository {
+	return &notificationRepositoryImpl{DB: db}
 }
 
-func (r *NotificationRepository) Create(notification *models.Notification) error {
+func (r *notificationRepositoryImpl) Create(notification *models.Notification) error {
 	if notification.NotificationID == "" {
 		notification.NotificationID = uuid.New().String()
 	}
@@ -32,7 +40,7 @@ func (r *NotificationRepository) Create(notification *models.Notification) error
 	return r.DB.Create(notification).Error
 }
 
-func (r *NotificationRepository) FindByID(notificationID string) (*models.Notification, error) {
+func (r *notificationRepositoryImpl) FindByID(notificationID string) (*models.Notification, error) {
 	var notification models.Notification
 	err := r.DB.Where("notification_id = ?", notificationID).First(&notification).Error
 	if err != nil {
@@ -41,20 +49,21 @@ func (r *NotificationRepository) FindByID(notificationID string) (*models.Notifi
 	return &notification, nil
 }
 
-func (r *NotificationRepository) FindByElderID(elderID string) ([]models.Notification, error) {
+func (r *notificationRepositoryImpl) FindByElderID(elderID string) ([]models.Notification, error) {
 	var notifications []models.Notification
 	err := r.DB.Where("elder_id = ?", elderID).Order("datetime DESC").Find(&notifications).Error
 	return notifications, err
 }
 
-func (r *NotificationRepository) MarkAsRead(notificationID string) error {
+func (r *notificationRepositoryImpl) MarkAsRead(notificationID string) error {
 	return r.DB.Model(&models.Notification{}).Where("notification_id = ?", notificationID).
 		Update("is_read", true).Error
 }
 
-func (r *NotificationRepository) CountUnread(elderID string) (int64, error) {
+func (r *notificationRepositoryImpl) CountUnread(elderID string) (int64, error) {
 	var count int64
 	err := r.DB.Model(&models.Notification{}).Where("elder_id = ? AND is_read = ?", elderID, false).Count(&count).Error
 	return count, err
 }
+
 

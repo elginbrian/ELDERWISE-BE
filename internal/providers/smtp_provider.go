@@ -162,3 +162,4 @@ func (p *SMTPProvider) SendEmailAsync(to, subject, htmlBody string) {
 	}()
 }
 
+

@@ -9,3 +9,4 @@ type AreaRequestDTO struct {
 	WatchAreaRadius int     `json:"watch_area_radius" validate:"required"`
 	IsActive        bool    `json:"is_active"`
 }
+

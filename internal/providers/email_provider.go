@@ -5,3 +5,4 @@ type EmailProvider interface {
 	SendEmailAsync(to, subject, htmlBody string)
 }
 
+

@@ -6,10 +6,10 @@ import (
 )
 
 type LocationHistoryService struct {
-	repo *repository.LocationHistoryRepository
+	repo repository.LocationHistoryRepository
 }
 
-func NewLocationHistoryService(repo *repository.LocationHistoryRepository) *LocationHistoryService {
+func NewLocationHistoryService(repo repository.LocationHistoryRepository) *LocationHistoryService {
 	return &LocationHistoryService{repo: repo}
 }
 
@@ -32,3 +32,4 @@ func (s *LocationHistoryService) CreateLocationHistory(history models.LocationHi
 func (s *LocationHistoryService) AddLocationPoint(point models.LocationHistoryPoint) error {
 	return s.repo.AddLocationPoint(point)
 }
+

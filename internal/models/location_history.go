@@ -9,3 +9,4 @@ type LocationHistory struct {
 	CreatedAt         time.Time                `json:"created_at"`
 	Points            []LocationHistoryPoint   `json:"points" gorm:"foreignKey:LocationHistoryID"`
 }
+

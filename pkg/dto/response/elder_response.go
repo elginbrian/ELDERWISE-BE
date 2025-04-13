@@ -9,3 +9,4 @@ type EldersResponseDTO struct {
 type ElderResponseDTO struct {
 	Elder models.Elder `json:"elder"`
 }
+

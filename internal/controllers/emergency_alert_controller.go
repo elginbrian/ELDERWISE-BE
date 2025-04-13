@@ -196,3 +196,4 @@ func (c *EmergencyAlertController) MockEmergencyAlert(ctx *fiber.Ctx) error {
 	})
 }
 
+
