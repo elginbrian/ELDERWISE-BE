@@ -12,3 +12,4 @@ type EmergencyAlert struct {
 	IsDismissed      bool      `json:"is_dismissed"`
 }
 
+

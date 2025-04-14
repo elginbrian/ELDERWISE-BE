@@ -10,3 +10,4 @@ type AgendasResponseDTO struct {
 	Agendas []models.Agenda `json:"agendas"`
 }
 
+

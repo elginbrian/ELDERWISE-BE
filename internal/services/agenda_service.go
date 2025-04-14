@@ -60,3 +60,4 @@ func (s *AgendaService) DeleteAgenda(agendaID string) error {
 	return s.repo.Delete(agendaID)
 }
 
+

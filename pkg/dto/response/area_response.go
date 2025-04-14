@@ -10,3 +10,4 @@ type AreasResponseDTO struct {
 	Areas []models.Area `json:"areas"`
 }
 
+

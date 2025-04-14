@@ -6,3 +6,4 @@ type EmergencyAlertResponseDTO struct {
 	EmergencyAlert models.EmergencyAlert `json:"emergency_alert"`
 }
 
+

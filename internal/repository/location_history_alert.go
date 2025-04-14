@@ -48,3 +48,4 @@ func (r *locationHistoryRepositoryImpl) AddLocationPoint(point models.LocationHi
 	return r.DB.Create(&point).Error
 }
 
+
