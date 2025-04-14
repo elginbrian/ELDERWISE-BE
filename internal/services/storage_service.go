@@ -164,3 +164,4 @@ func getBucketFromURL() string {
 	return "elderwise-images" 
 }
 
+

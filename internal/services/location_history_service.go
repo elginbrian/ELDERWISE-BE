@@ -34,3 +34,4 @@ func (s *LocationHistoryService) AddLocationPoint(point models.LocationHistoryPo
 }
 
 
+

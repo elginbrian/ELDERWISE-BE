@@ -49,3 +49,4 @@ func (r *locationHistoryRepositoryImpl) AddLocationPoint(point models.LocationHi
 }
 
 
+

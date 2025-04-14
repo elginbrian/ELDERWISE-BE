@@ -1,4 +1,5 @@
 # Elderwise by Masukin Andre ke Raion
+
 ![ElderWise by Masukin Andre ke Raion (1)](https://github.com/user-attachments/assets/73bd0027-17f8-432e-9a31-b3d01ff1192b)
 
 ## 🌟 About the Application
@@ -59,35 +60,84 @@ Elderwise is an innovative application designed to improve the quality of life f
 
 ### Prerequisites
 
-- Flutter 3.6.1 or newer
-- Dart 3.6.0 or newer
-- Android Studio / VSCode
-- Android / iOS emulator or physical device
+- Go 1.18 or newer
+- Docker and Docker Compose
+- PostgreSQL (optional for local development without Docker)
+- Git
 
 ### Installation Steps
 
 1. **Clone the repository**
 
    ```
-   git clone https://github.com/[username-repo]/elderwise.git
+   git clone https://github.com/elginbrian/ELDERWISE-BE.git
    ```
 
 2. **Navigate to the project directory**
 
    ```
-   cd elderwise
+   cd ELDERWISE-BE
    ```
 
-3. **Install dependencies**
+3. **Set up environment variables**
+
+   Create a `.env` file based on the examples in docker-compose files:
 
    ```
-   flutter pub get
+   # Database settings
+   POSTGRES_HOST=localhost
+   POSTGRES_PORT=5432
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_DB=elderwise_dev
+   POSTGRES_TIMEZONE=Asia/Jakarta
+
+   # Storage settings
+   SUPABASE_URL=your_supabase_url
+   SUPABASE_KEY=your_supabase_key
+   SUPABASE_BUCKETNAME=elderwise-images
+
+   # Email settings
+   SENDGRID_API_KEY=your_sendgrid_key
+   EMAIL_FROM=your_email@example.com
+   EMAIL_FROM_NAME=Elderwise Alert System
    ```
 
-4. **Run the application**
+4. **Install dependencies**
+
    ```
-   flutter run
+   go mod tidy
+   go mod vendor
    ```
+
+5. **Run with Docker (recommended)**
+
+   For development:
+
+   ```
+   docker-compose -f docker-compose.dev.yml up -d
+   ```
+
+   For production:
+
+   ```
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+6. **Run without Docker**
+
+   Make sure PostgreSQL is running locally, then:
+
+   ```
+   go run cmd/elderwise/main.go
+   ```
+
+7. **Access the API**
+
+   The API will be available at:
+
+   - Development: http://localhost:4000/api/v1
+   - Production: http://localhost:4001/api/v1
 
 ## 👥 Team Masukin Andre ke Raion
 

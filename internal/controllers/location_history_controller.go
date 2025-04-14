@@ -185,3 +185,4 @@ func GetLocationHistoryPoints(c *fiber.Ctx) error {
 
 
 
+
