@@ -92,6 +92,8 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 
 	protected.Get("/location-history/:location_history_id", rs.LocationHistoryController.GetLocationHistoryByID)
 	protected.Get("/location-history/:location_history_id/points", rs.LocationHistoryController.GetLocationHistoryPoints)
+	protected.Post("/location-history", rs.LocationHistoryController.CreateLocationHistory)
+	protected.Post("/location-history/:location_history_id/points", rs.LocationHistoryController.AddLocationPoint)
 
 	protected.Get("/agendas/:agenda_id", rs.AgendaController.GetAgendaByID)
 	protected.Post("/agendas", rs.AgendaController.CreateAgenda)
@@ -116,5 +118,6 @@ func (rs *RouteSetup) Setup(app *fiber.App, jwtSecret string) {
 func dummyHandler(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Welcome to Elderwise by Masukin Andre ke Raion"})
 }
+
 
 

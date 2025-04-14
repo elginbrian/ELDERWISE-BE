@@ -10,3 +10,4 @@ type LocationHistoryPoint struct {
 	Timestamp         time.Time `json:"timestamp"`
 }
 
+

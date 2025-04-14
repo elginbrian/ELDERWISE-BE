@@ -51,3 +51,4 @@ func (r *agendaRepositoryImpl) Delete(agendaID string) error {
 	return r.DB.Where("agenda_id = ?", agendaID).Delete(&models.Agenda{}).Error
 }
 
+
