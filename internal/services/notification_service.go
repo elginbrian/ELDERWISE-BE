@@ -289,3 +289,4 @@ func isPointInArea(lat, lng float64, area models.Area) bool {
 }
 
 
+

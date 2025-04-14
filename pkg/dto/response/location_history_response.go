@@ -11,3 +11,4 @@ type LocationHistoryPointsResponseDTO struct {
 }
 
 
+

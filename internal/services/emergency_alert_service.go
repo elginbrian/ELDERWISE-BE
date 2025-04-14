@@ -144,3 +144,4 @@ func (s *emergencyAlertService) sendAlertNotification(alert *models.EmergencyAle
 	return nil
 }
 
+

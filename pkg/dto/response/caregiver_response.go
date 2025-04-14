@@ -10,3 +10,4 @@ type CaregiverResponseDTO struct {
 	Caregiver models.Caregiver `json:"caregiver"`
 }
 
+

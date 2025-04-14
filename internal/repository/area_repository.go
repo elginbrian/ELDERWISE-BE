@@ -62,3 +62,4 @@ func (r *areaRepository) FindByElderID(elderID string) ([]models.Area, error) {
 }
 
 
+

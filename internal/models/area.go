@@ -15,3 +15,4 @@ type Area struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 }
 
+

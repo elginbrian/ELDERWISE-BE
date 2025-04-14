@@ -10,3 +10,4 @@ type LocationHistory struct {
 	Points            []LocationHistoryPoint   `json:"points" gorm:"foreignKey:LocationHistoryID"`
 }
 
+

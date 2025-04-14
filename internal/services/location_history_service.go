@@ -33,3 +33,4 @@ func (s *LocationHistoryService) AddLocationPoint(point models.LocationHistoryPo
 	return s.repo.AddLocationPoint(point)
 }
 
+
